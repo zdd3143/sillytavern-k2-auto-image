@@ -88,7 +88,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -SillyTavernPath "D:\Sill
 
 ```powershell
 ollama serve
-ollama pull qwen2.5-7b-instruct
+ollama pull richardyoung/qwen2.5-7b-instruct-abliterated:latest
 ```
 
 如果你用别的本地模型，在扩展设置里改“模型名”即可；不要求一定是 abliterated 版本。
