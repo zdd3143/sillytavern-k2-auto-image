@@ -36,23 +36,29 @@ import {
 const MODULE_NAME = 'k2auto';
 
 const DEFAULT_STAGE1 = [
-    '你是电影分镜师和 AI 绘画提示词作者。只根据<正文>和<人物设定>，写一段简体中文画面描述。',
+    '你是电影分镜师和 AI 绘画提示词作者。你的任务不是写人物肖像，而是把<正文>当前这一刻转成一张能看懂情节的动画定格。',
+    '动笔前先在心里判断（不要输出分析）：这段情节的高潮或转折在哪一句；这一刻谁在做什么，手、身体、视线、和谁或什么接触；',
+    '画面里留下哪些痕迹能说明刚刚发生了什么。只画“高潮/转折”的这一个瞬间，不要从正文第一句开始按顺序复述。',
     '要求：',
-    '1. 开头先写主要人物姓名和镜头类型，例如“温楚楚的中景”。',
-    '2. 描述人物外貌、发型、服装、姿势、表情。',
-    '3. 描述环境、光线、色调、构图、画风。',
-    '4. 只写一个静止瞬间，不写对白、心理、剧情、连续动作。',
-    '5. 人物必须占画面主体，突出人物魅力与动作。',
-    '6. 用姿势、距离、衣物状态和表情表现人物关系；不描写露骨性行为。',
-    '7. 画风固定为现代日本 TV 动画：干净数字线稿、柔和赛璐璐阴影、清晰色块、精致眼睛、动画截图感；禁止写实、3D、照片、真人影视感。',
-    '8. 100-160 字。只输出描述，不要解释、不要引号。',
+    '1. 开头写主要人物姓名和镜头类型/角度，例如“希塔姆的中近景，略低机位”。',
+    '2. 画面只能有一个主动作；多人时，一个人主动作，另一个人只能回应或承受，不要写两个人各自做一套动作。',
+    '3. 禁止“先……然后……接着……”式叙述，禁止写动作过程；只写动作发生到一半或刚完成时的可见状态。',
+    '4. 用静态证据暗示前因后果：湿透的斗篷、肩上的血、被踢开的门、晃动的灯、抓皱的衣领、退开的距离；不要解释心理。',
+    '5. 保留正文的关键地点、道具、天气、时间、光线和人物状态，不要换成通用酒馆或森林。',
+    '6. 外貌和服装只写与这一刻有关的部分，不要复制整张角色卡。',
+    '7. 多人时写清前后、左右、远近关系，谁在动作，谁在回应。',
+    '8. 画风固定为现代日本 TV 动画：干净数字线稿、柔和赛璐璐阴影、清晰色块、精致眼睛、动画截图感；禁止写实、3D、照片、真人影视感。',
+    '9. 不写对白、心理、故事梗概、前因后果说明；如果正文以对白为主，选说话者最有动作或表情的一刻；如果正文是静态描写，选最能体现人物关系的一个动作细节。',
+    '10. 100-180 字。只输出画面描述，不要解释、不要引号、不要分点。',
 ].join('\n');
 
 const DEFAULT_STAGE2 = [
-    'Translate the Chinese image prompt into natural English.',
-    'Keep every visual detail: character, appearance, clothing, pose, expression, setting, lighting, composition, style.',
-    'Preserve the modern Japanese TV anime style. The output must include: modern Japanese TV anime, anime screencap, crisp digital lineart, soft cel shading, clean color blocks, detailed eyes, vibrant colors.',
+    'Translate the Chinese film-still description into natural English for an anime image generator.',
+    'Preserve the exact single moment: the main action, who does it to whom or what, hand and body positions, gaze, distance, clothing and prop state, injuries or traces, location, time, weather, light, and composition.',
+    'Do not turn it into a portrait, do not list multiple sequential actions, do not add new characters or events, and do not explain the story.',
+    'Keep the modern Japanese TV anime look; the caller already prepends the quality style tags, so do not repeat any style-tag preamble.',
     'Never translate it into photorealistic, 3D, CGI, or live-action style.',
+    'Do not keep Chinese character names such as 希塔姆 or 梅伊德娜: replace each person with one short appearance descriptor from the description, e.g. "the blue-haired man" or "the blonde woman", and use the same descriptor every time the same person appears, because the character LoRA already controls identity.',
     'Output English only. No Chinese characters, quotes, labels, or commentary.',
 ].join(' ');
 

@@ -19,7 +19,7 @@
 
 - **只读当前正文**：优先提取最后一条 AI 消息里的 `<game>...</game>`；没有 `<game>` 时自动剥离 `<think>`、`<options>`、`<summary>`、`<comment>`、变量/状态 JSON、HTML 标签和数值行。
 - **人物设定**：读取当前角色卡的 `Description / Personality / Scenario`，以及角色卡世界书里与正文人物匹配的外形条目（基础信息、身高骨架、体脂、皮肤、面部、发型、日常外穿、鞋袜、配饰、体态、气味）。
-- **两段式本地提示词**：第一段让 Qwen 用中文写“以人物为中心的静止分镜”；第二段只做英文翻译，避免模型照抄对白和连续剧情。
+- **两段式本地提示词**：第一段让 Qwen 按“剧情”写画面——先判断本段的高潮/转折，只画一个主动作，用静态痕迹（湿衣、血迹、被踢开的门、晃动的灯）暗示前因，不照抄对白、不罗列连续动作；第二段只做英文翻译，不再重复风格标签，也不把人物名写进提示词（外观由角色 LoRA 决定）。
 - **固定动漫风格**：质量前缀锁定 `modern Japanese TV anime`，负面词排除 `photorealistic / 3d render / live action / CGI`。
 - **角色自适应工作流**：根据当前角色卡名称和正文里最后出现的角色别名，自动选择对应 LoRA 工作流；卡名命中优先，群聊/多人场景按正文最后提及者选择，未命中回退默认工作流。
 - **两套底模**：7 个角色使用 `waiIllustriousSDXL_v170` + Illustrious 角色 LoRA；基萨拉使用 Krea 2 Turbo + `Kisara_krea2` LoRA。每个工作流已把模型、LoRA、步数、CFG 写死，扩展只替换提示词/种子/尺寸。
@@ -364,7 +364,7 @@ git push -u origin main
 1. 仓库地址已按 `zdd3143/sillytavern-k2-auto-image` 填好；如果你 fork 或改名，同步替换 README 的 clone 地址和 `extension/manifest.json` 的 `homePage`
 2. 确认没有把 `data/`、生成图片、模型权重、API Key 提交进去
 3. 在仓库 About 里填一句简介和 topics：`sillytavern` `comfyui` `krea2` `ollama` `anime`
-4. 打一个 `v0.2.0` tag / Release
+4. 打一个 `v0.3.0` tag / Release
 
 详细步骤和可选的 Release 说明模板见 [docs/publishing.md](docs/publishing.md)。
 
