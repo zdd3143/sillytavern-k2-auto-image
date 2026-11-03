@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.4.0
+
+删除角色自动路由；工作流文件保留，改为“底模 + 角色 + 生成方式”命名。
+
+### 变更
+
+- **移除角色自动路由**：不再根据角色卡名/正文角色名自动切换工作流；每次生图只使用设置里指定的一个工作流
+- 删除 `CHARACTER_WORKFLOW_PRESETS`、`normalizeLookup()`、`getCharacterPresets()`、`resolveCharacterWorkflow()`，以及 `character_workflows` 设置和“角色 → 工作流”JSON 输入框
+- 8 个角色工作流按新规则重命名：
+  - `K2_IG_Hitamu.json` → `Illustrious_Hitamu_T2I.json`（其余 6 个 SDXL 角色同理）
+  - `K2_IG_Kisara.json` → `Krea2_Kisara_T2I.json`
+- 工作流内 `filename_prefix` 同步改为 `K2Auto_Illustrious_<角色>` / `K2Auto_Krea2_Kisara`
+- 设置面板“默认工作流（未匹配到角色时使用）”改回“工作流”
+- `uninstall.ps1 -RemoveWorkflow` 改为匹配新文件名
+- 版本号 0.4.0
+
+### 升级提示
+
+- 如果你之前设置过“角色 → 工作流 JSON”，升级后该设置会被忽略；直接在工作流设置里填写想用的文件名即可
+- 旧文件名 `K2_IG_*.json` 不会再被扩展使用，可手动删除 `data/<user>/user/workflows/` 下的旧文件
+
 ## 0.3.0
 
 剧情向提示词（按情节写画面）。

@@ -420,11 +420,10 @@ SillyTavern/data/default-user/user/images/
 
 ### 生成了错误的角色
 
-1. 打开调试日志，看 Console 里的 `character workflow`，确认 `role` 和 `workflow`；
-2. 检查当前角色卡名、`data.name`、头像是否包含别名；
-3. 群聊/多人卡按正文里**最后出现**的角色选；如果不对，把目标角色放到正文最后，或用“角色 → 工作流 JSON”手动覆盖；
-4. 角色卡名命中优先级高于正文；如果卡名本身包含某角色，会固定选该角色；
-5. 确认 `K2_IG_*.json` 在 `data/<user>/user/workflows/` 且文件名大小写一致。
+1. 扩展**不会**按角色自动切换工作流；先确认设置里的“工作流”填的是你想要的那个文件；
+2. 角色工作流的命名规则是 `Illustrious_<角色>_T2I.json` / `Krea2_Kisara_T2I.json`，换角色时手动改这个设置即可；
+3. 确认工作流在 `data/<user>/user/workflows/` 且文件名大小写一致；
+4. 想同时用两个角色时，可以在自己的工作流里串联两个 `LoraLoader`，或分别生成两张图。
 
 ---
 

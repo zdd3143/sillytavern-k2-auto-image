@@ -196,35 +196,25 @@ character.scenario
 
 > 这段过滤是为了让公开仓库的默认行为保持克制，同时保留“画对人”所需的外形信息。你可以在自己的分支里改 `extractVisualProfile()`。
 
-### 4.4 角色 → 工作流路由
+### 4.4 工作流选择
 
-`resolveCharacterWorkflow(body)` 决定这次用哪个工作流，逻辑在 `extension/index.js`：
-
-```js
-const CHARACTER_WORKFLOW_PRESETS = [
-  { id: 'hitamu', label: '希塔姆·坎', aliases: [...], workflow: 'K2_IG_Hitamu.json', width: 832, height: 1216 },
-  // ...
-];
-```
-
-1. 用 `resolveActiveCharacter()` 取当前角色卡：优先 `context.characterId`；群聊回退最后一条 AI 消息的 `original_avatar` / `name`。
-2. 把角色卡 `name`、`data.name`、`avatar` 和正文都做 `normalizeLookup()`：转小写并去掉空格、`·`、标点、括号。
-3. 每个 preset 的别名与卡名/正文比对：
-   - 卡名命中：`score += 100`
-   - 正文每出现一次：`score += 1`
-   - 同分时取正文里 `lastIndex` 更大的（最后被提到的人）。
-4. 没有命中任何角色时，回退 `settings.workflow_name`（默认 `Krea2_Turbo_T2I.json`）。
-
-`processMessage()` 把路由结果原样传给 `generateImage(prompt, route)`：
+扩展**不按角色自动路由**。每次生图都使用设置里的 `workflow_name`（默认 `Krea2_Turbo_T2I.json`）：
 
 ```js
-const route = resolveCharacterWorkflow(body);
-const result = await generateImage(prompt, route);
+const result = await generateImage(prompt);
 ```
 
-`buildWorkflow()` 用 `route.workflow` 读文件，用 `route.width/height` 覆盖尺寸；工作流里的模型、LoRA、步数、CFG 不读全局设置，所以每个角色可以有自己的底模和采样参数。
+`buildWorkflow()` 用 `settings.workflow_name` 读文件，用 `settings.width/height` 替换尺寸占位符。工作流里的模型、LoRA、步数、CFG、采样器不读全局设置，所以每个角色工作流可以有自己的底模和采样参数。
 
-路由结果可以在设置面板“角色 → 工作流 JSON”里覆盖，格式是数组；解析失败会回退内置映射。
+仓库自带的 8 个角色工作流只是**现成可选项**，命名规则是“底模 + 角色 + 方式”：
+
+| 工作流 | 说明 |
+| --- | --- |
+| `Krea2_Turbo_T2I.json` | 默认，Krea 2 Turbo 纯文生图，无角色 LoRA |
+| `Krea2_Kisara_T2I.json` | Krea 2 + `Kisara_krea2` LoRA |
+| `Illustrious_<角色>_T2I.json` | `waiIllustriousSDXL_v170` + 对应 Illustrious 角色 LoRA |
+
+想画某个角色，就把对应文件名填进设置里的“工作流”；扩展不会自己切换。
 
 ---
 
@@ -354,7 +344,7 @@ POST /api/sd/comfy/workflow
 { "file_name": "Krea2_Turbo_T2I.json" }
 ```
 
-这个接口从当前用户的 `data/<user>/user/workflows/` 读取文件，返回原始 JSON 文本。`file_name` 来自角色路由结果（`K2_IG_*.json`）或默认设置。
+这个接口从当前用户的 `data/<user>/user/workflows/` 读取文件，返回原始 JSON 文本。`file_name` 来自设置里的“工作流”（默认 `Krea2_Turbo_T2I.json`）。
 
 读取前会先请求 `/api/sd/comfy/workflows` 校验文件名存在，避免 SillyTavern 在文件缺失时静默回退到 `Default_Comfy_Workflow.json`。
 
@@ -444,7 +434,7 @@ API 格式长这样：
 
 节点 id 是字符串，连线是 `["上游节点id", 输出序号]`。
 
-角色工作流（`comfyui/characters/K2_IG_*.json`）也是同一格式，区别是：
+角色工作流（`comfyui/characters/Illustrious_*_T2I.json` / `Krea2_Kisara_T2I.json`）也是同一格式，区别是：
 
 - SDXL 角色用 `CheckpointLoaderSimple` 加载 `waiIllustriousSDXL_v170.safetensors`，再用 `LoraLoader` 加载对应角色 LoRA；
 - `LoraLoader` 的 `model` 接底模输出 0，`clip` 接底模输出 1；

@@ -31,10 +31,8 @@
 | 设置 | 默认值 | 说明 |
 | --- | --- | --- |
 | 地址 | `http://127.0.0.1:8188` | 必须是 **SillyTavern 服务端**能访问的地址；不要填 `localhost` 如果 ST 在 Docker 里 |
-| 默认工作流 | `Krea2_Turbo_T2I.json` | 未匹配到角色时使用；位于 `data/default-user/user/workflows/`，大小写敏感 |
-| 角色 → 工作流 JSON | 空 | 覆盖内置 8 角色映射；空表示用内置映射 |
-| 宽 | `1024` | 仅默认/未匹配角色时使用；必须是 64 的倍数 |
-| 高 | `1024` | 同上 |
+| 工作流 | `Krea2_Turbo_T2I.json` | 每次生图都使用这一个文件；位于 `data/default-user/user/workflows/`，大小写敏感 |
+| 宽 | `1024` | 仅当工作流含 `%width%` 时使用；必须是 64 的倍数 |
 | 高 | `1024` | 同上 |
 | 步数 | `8` | Krea 2 Turbo 用 6–10；普通模型用 20–30 |
 | CFG | `1` | Krea 2 Turbo 用 1；普通模型 4–7 |
@@ -56,52 +54,40 @@ SillyTavern/
 
 多用户部署时，每个用户有自己的 `data/<用户名>/user/workflows/`。扩展读取的是**当前登录用户**的目录。
 
-### 角色自动路由
+### 角色 LoRA 工作流（手动切换）
 
-内置 8 个角色映射，工作流文件必须放在同一个 `workflows/` 目录：
+仓库自带 8 个角色 LoRA 工作流，命名规则是 **底模 + 角色 + 生成方式**：
 
 | 角色 | 工作流 | 底模 | 默认尺寸 |
 | --- | --- | --- | --- |
-| 希塔姆·坎 | `K2_IG_Hitamu.json` | SDXL Illustrious | 832×1216 |
-| 梅伊德娜·安洁 | `K2_IG_Maidena.json` | SDXL Illustrious | 832×1216 |
-| 花畑·诺金斯 | `K2_IG_Hanabata.json` | SDXL Illustrious | 832×1216 |
-| 艾诺梅 | `K2_IG_Enome.json` | SDXL Illustrious | 832×1216 |
-| 诺玛·露恩 | `K2_IG_Noma.json` | SDXL Illustrious | 832×1216 |
-| 托琪希可·达娜 | `K2_IG_Tokishikko.json` | SDXL Illustrious | 832×1216 |
-| 基库鲁·马丹 | `K2_IG_Kikuru.json` | SDXL Illustrious | 832×1216 |
-| 基萨拉 | `K2_IG_Kisara.json` | Krea 2 Turbo | 1024×1024 |
+| 希塔姆·坎 | `Illustrious_Hitamu_T2I.json` | SDXL Illustrious | 832×1216 |
+| 梅伊德娜·安洁 | `Illustrious_Maidena_T2I.json` | SDXL Illustrious | 832×1216 |
+| 花畑·诺金斯 | `Illustrious_Hanabata_T2I.json` | SDXL Illustrious | 832×1216 |
+| 艾诺梅 | `Illustrious_Enome_T2I.json` | SDXL Illustrious | 832×1216 |
+| 诺玛·露恩 | `Illustrious_Noma_T2I.json` | SDXL Illustrious | 832×1216 |
+| 托琪希可·达娜 | `Illustrious_Tokishikko_T2I.json` | SDXL Illustrious | 832×1216 |
+| 基库鲁·马丹 | `Illustrious_Kikuru_T2I.json` | SDXL Illustrious | 832×1216 |
+| 基萨拉 | `Krea2_Kisara_T2I.json` | Krea 2 Turbo | 1024×1024 |
 
-选择规则：
+命名里的 `T2I` 表示文生图（txt2img）；如果以后自己做图生图版本，用 `I2I` 结尾，例如 `Illustrious_Hitamu_I2I.json`。
 
-1. 当前角色卡名/`data.name`/头像命中别名 → 直接选该角色；
-2. 否则扫正文，取最后提到的角色（多人场景优先画最后出场的人）；
-3. 都没命中 → 用“默认工作流”和全局宽高。
+**扩展不会按角色自动切换工作流。** 想画哪个角色，直接把对应文件名填进设置里的“工作流”即可；换角色时再改成另一个文件。所有工作流都放在同一个 `workflows/` 目录：
 
-“角色 → 工作流 JSON”可以覆盖内置映射，格式：
-
-```json
-[
-  {
-    "id": "my-char",
-    "label": "我的角色",
-    "aliases": ["我的角色", "my char"],
-    "workflow": "K2_IG_MyChar.json",
-    "width": 832,
-    "height": 1216
-  }
-]
+```text
+SillyTavern/
+└─ data/
+   └─ default-user/
+      └─ user/
+         └─ workflows/
+            ├─ Krea2_Turbo_T2I.json
+            ├─ Illustrious_Hitamu_T2I.json
+            ├─ Illustrious_Maidena_T2I.json
+            └─ ...
 ```
 
-字段说明：
+每个角色工作流内部已经写死了底模、LoRA（强度 0.75）、步数、CFG 和采样器，扩展只替换 `%prompt%`、`%negative_prompt%`、`%seed%`、`%width%`、`%height%`。因此设置面板里的“步数/CFG/采样器”只对含这些占位符的工作流（例如默认 Krea2 工作流）生效。
 
-| 字段 | 必填 | 说明 |
-| --- | --- | --- |
-| `label` | 否 | 状态栏/toast 显示的名字 |
-| `aliases` | 是 | 角色卡名或正文里可能出现的名字；会做小写、去空格/标点归一化 |
-| `workflow` | 是 | `workflows/` 下的文件名 |
-| `width` / `height` | 否 | 不填则用全局宽高 |
-
-填写非法 JSON 时不会中断生图，扩展会回退内置映射并在 Console 打日志。
+想自己加一个角色：复制任意一个角色工作流，把 `LoraLoader.lora_name` 改成你的 LoRA 文件名，并按“底模_角色_T2I.json”命名，放进 `workflows/`，然后在设置里选择它。
 
 ### 可选占位符覆盖
 
@@ -415,7 +401,7 @@ LLM: 7B Qwen
 延迟: 1800
 ```
 
-> 上面的步数/CFG/采样器只对默认工作流生效。角色工作流（`K2_IG_*.json`）内部写死 SDXL 28 steps / CFG 6 或 Krea2 8 steps / CFG 1；8GB 显卡实测 832×1216 SDXL 可以跑，连续切换多个 LoRA 后如果 ComfyUI 崩，重启它或改用低显存启动脚本。
+> 上面的步数/CFG/采样器只对含这些占位符的工作流生效。角色工作流（`Illustrious_*_T2I.json` / `Krea2_Kisara_T2I.json`）内部写死 SDXL 28 steps / CFG 6 或 Krea2 8 steps / CFG 1；8GB 显卡实测 832×1216 SDXL 可以跑，连续切换多个 LoRA 后如果 ComfyUI 崩，重启它或改用低显存启动脚本。
 
 ### 12GB+ 显卡
 

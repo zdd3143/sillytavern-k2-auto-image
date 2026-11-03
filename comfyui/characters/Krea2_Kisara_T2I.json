@@ -1,11 +1,26 @@
-{
+﻿{
   "1": {
-    "class_type": "CheckpointLoaderSimple",
+    "class_type": "UNETLoader",
     "inputs": {
-      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+      "unet_name": "krea2Turbo_v10_2951489.safetensors",
+      "weight_dtype": "default"
     }
   },
   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_4b_abliterated_fp8_scaled.safetensors",
+      "type": "krea2",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    }
+  },
+  "10": {
     "class_type": "LoraLoader",
     "inputs": {
       "model": [
@@ -13,35 +28,35 @@
         0
       ],
       "clip": [
-        "1",
-        1
+        "2",
+        0
       ],
-      "lora_name": "maidena-ange-s1-illustriousxl-lora-nochekaiser.safetensors",
+      "lora_name": "Kisara_krea2.safetensors",
       "strength_model": 0.75,
       "strength_clip": 0.75
-    }
-  },
-  "3": {
-    "class_type": "CLIPTextEncode",
-    "inputs": {
-      "clip": [
-        "2",
-        1
-      ],
-      "text": "%prompt%"
     }
   },
   "4": {
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": [
-        "2",
+        "10",
+        1
+      ],
+      "text": "%prompt%"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "10",
         1
       ],
       "text": "%negative_prompt%"
     }
   },
-  "5": {
+  "6": {
     "class_type": "EmptyLatentImage",
     "inputs": {
       "width": "%width%",
@@ -49,54 +64,54 @@
       "batch_size": 1
     }
   },
-  "6": {
+  "7": {
     "class_type": "KSampler",
     "inputs": {
       "model": [
-        "2",
+        "10",
         0
       ],
       "positive": [
-        "3",
-        0
-      ],
-      "negative": [
         "4",
         0
       ],
-      "latent_image": [
+      "negative": [
         "5",
         0
       ],
-      "seed": "%seed%",
-      "steps": 28,
-      "cfg": 6.0,
-      "sampler_name": "dpmpp_2m",
-      "scheduler": "karras",
-      "denoise": 1.0
-    }
-  },
-  "7": {
-    "class_type": "VAEDecode",
-    "inputs": {
-      "samples": [
+      "latent_image": [
         "6",
         0
       ],
-      "vae": [
-        "1",
-        2
-      ]
+      "seed": "%seed%",
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
     }
   },
   "8": {
-    "class_type": "SaveImage",
+    "class_type": "VAEDecode",
     "inputs": {
-      "images": [
+      "samples": [
         "7",
         0
       ],
-      "filename_prefix": "SillyTavern/K2Auto_IG_Maidena"
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ],
+      "filename_prefix": "K2Auto_Krea2_Kisara"
     }
   }
 }

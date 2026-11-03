@@ -1,4 +1,4 @@
-{
+﻿{
   "1": {
     "class_type": "CheckpointLoaderSimple",
     "inputs": {
@@ -16,9 +16,9 @@
         "1",
         1
       ],
-      "lora_name": "kikuru_futoku_884402.safetensors",
-      "strength_model": 0.7,
-      "strength_clip": 0.7
+      "lora_name": "hanabata-nohkins-s1-illustriousxl-lora-nochekaiser.safetensors",
+      "strength_model": 0.75,
+      "strength_clip": 0.75
     }
   },
   "3": {
@@ -96,7 +96,7 @@
         "7",
         0
       ],
-      "filename_prefix": "SillyTavern/K2Auto_IG_Kikuru"
+      "filename_prefix": "K2Auto_Illustrious_Hanabata"
     }
   }
 }

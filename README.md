@@ -2,7 +2,7 @@
 
 给 [SillyTavern](https://github.com/SillyTavern/SillyTavern) 用的**本地自动配图扩展**：每收到一条 AI 正文，就提取当前场景和人物设定，让本地 Qwen 写成生图提示词，再调用本地 ComfyUI 生成一张现代日本 TV 动画风格的插图，并自动贴回聊天。
 
-默认使用 Krea 2 Turbo；也支持按当前生图人物自动切换到 SDXL/Illustrious + 角色 LoRA 的工作流，适合“不道德公会”这类多角色卡。
+默认使用 Krea 2 Turbo；也随仓库带了一批**按“底模 + 角色 + 文生图/图生图”命名**的 LoRA 工作流（`Illustrious_<角色>_T2I.json` / `Krea2_Kisara_T2I.json`），适合“不道德公会”这类多角色卡。扩展总是使用设置里指定的一个工作流，不自动切换。
 
 整个流程都在本机完成：
 
@@ -21,8 +21,7 @@
 - **人物设定**：读取当前角色卡的 `Description / Personality / Scenario`，以及角色卡世界书里与正文人物匹配的外形条目（基础信息、身高骨架、体脂、皮肤、面部、发型、日常外穿、鞋袜、配饰、体态、气味）。
 - **两段式本地提示词**：第一段让 Qwen 按“剧情”写画面——先判断本段的高潮/转折，只画一个主动作，用静态痕迹（湿衣、血迹、被踢开的门、晃动的灯）暗示前因，不照抄对白、不罗列连续动作；第二段只做英文翻译，不再重复风格标签，也不把人物名写进提示词（外观由角色 LoRA 决定）。
 - **固定动漫风格**：质量前缀锁定 `modern Japanese TV anime`，负面词排除 `photorealistic / 3d render / live action / CGI`。
-- **角色自适应工作流**：根据当前角色卡名称和正文里最后出现的角色别名，自动选择对应 LoRA 工作流；卡名命中优先，群聊/多人场景按正文最后提及者选择，未命中回退默认工作流。
-- **两套底模**：7 个角色使用 `waiIllustriousSDXL_v170` + Illustrious 角色 LoRA；基萨拉使用 Krea 2 Turbo + `Kisara_krea2` LoRA。每个工作流已把模型、LoRA、步数、CFG 写死，扩展只替换提示词/种子/尺寸。
+- **角色 LoRA 工作流（手动切换）**：随仓库提供 8 个按“底模 + 角色 + 文生图/图生图”命名的工作流（7 个 `waiIllustriousSDXL_v170` + Illustrious 角色 LoRA，基萨拉为 Krea 2 Turbo + `Kisara_krea2` LoRA）。每个工作流已把模型、LoRA、步数、CFG 写死，扩展只替换提示词/种子/尺寸。想用哪个角色，就把对应文件名填进“工作流”设置，不会自动按角色切换。
 - **一条文本一张图**：只处理没有媒体的 AI 消息；生成出的图片消息会被识别并跳过；同一正文有签名去重。
 - **可配置**：ComfyUI 地址、工作流、分辨率、步数、CFG、采样器、种子、本地 LLM 地址/模型、两段 system prompt、质量前缀、负面词。
 - **手动测试**：设置面板里有“测试连接”和“立即生成”，不用先发消息。
@@ -89,7 +88,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -SillyTavernPath "D:\Sill
 1. 把 `extension/` 复制到 `SillyTavern/public/scripts/extensions/third-party/k2-auto-image/`
 2. 把 `comfyui/Krea2_Turbo_T2I.json` 和 `comfyui/characters/*.json` 复制到 `SillyTavern/data/default-user/user/workflows/`
 
-安装后工作流目录里应有 1 个默认工作流 + 8 个 `K2_IG_*.json` 角色工作流。
+安装后工作流目录里应有 1 个默认工作流（`Krea2_Turbo_T2I.json`）+ 8 个角色 LoRA 工作流（`Illustrious_<角色>_T2I.json` / `Krea2_Kisara_T2I.json`）。
 
 也可以手动复制，目录结构见 [docs/how-it-works.md](docs/how-it-works.md)。
 
@@ -147,11 +146,10 @@ CHARACTER_MESSAGE_RENDERED 事件
   │
   ├─ 忽略用户消息 / 系统消息 / 图片消息
   ├─ extractMainBody()          只取 <game> 或清洗后的正文
-  ├─ resolveCharacterWorkflow() 按角色卡/正文选 K2_IG_*.json
   ├─ getCharacterSetting()      角色卡 + 世界书外形条目
   ├─ callLocalLlm() × 2         中文分镜 -> 英文提示词
   ├─ quality_prefix + negative  固定动漫风格
-  ├─ buildWorkflow()            替换 ComfyUI 工作流占位符
+  ├─ buildWorkflow()            按“工作流”设置替换占位符
   ├─ POST /api/sd/comfy/generate
   ├─ saveBase64AsFile()         保存到 SillyTavern 用户图片目录
   └─ chat.push + addOneMessage  作为图片消息贴回聊天
@@ -166,7 +164,7 @@ CHARACTER_MESSAGE_RENDERED 事件
 - 本地 LLM 走 SillyTavern 的服务端代理 `/api/backends/chat-completions/generate`，浏览器不直接跨域访问 Ollama。
 - ComfyUI 走 SillyTavern 的服务端代理 `/api/sd/comfy/generate`，浏览器不直接跨域访问 8188。
 - 图片通过 `/api/images/upload` 保存，消息结构沿用 SillyTavern 的 `extra.media` 格式。
-- 角色路由先看当前角色卡名/头像是否命中别名；未命中再扫正文，取最后出现的角色。这样“群聊卡里同时出现多人”时，会画正文最后聚焦的那个人。
+- 每次生图只用设置里指定的**一个工作流**；想换角色 LoRA，就把对应文件名填进“工作流”，不按角色自动切换。
 
 完整调用链、请求体和数据结构见 [docs/how-it-works.md](docs/how-it-works.md)。
 
@@ -182,8 +180,7 @@ CHARACTER_MESSAGE_RENDERED 事件
 | --- | --- | --- |
 | 启用 | 关 | 勾选后每条 AI 回复自动生成 |
 | ComfyUI 地址 | `http://127.0.0.1:8188` | 必须是 SillyTavern 服务端能访问的地址 |
-| 默认工作流 | `Krea2_Turbo_T2I.json` | 未匹配到角色时使用；位于 `data/default-user/user/workflows/` |
-| 角色 → 工作流 JSON | 空 | 覆盖内置 8 角色映射；每项 `{label, aliases, workflow, width, height}` |
+| 工作流 | `Krea2_Turbo_T2I.json` | 位于 `data/default-user/user/workflows/`；想用某个角色 LoRA 就填对应文件名 |
 | 宽 / 高 | 1024 / 1024 | 8GB 显存建议 768 或 1024 |
 | 步数 / CFG | 8 / 1 | Krea 2 Turbo 用低步数、CFG 1 |
 | 采样器 / 调度器 | `euler` / `simple` | 与工作流一致 |
@@ -218,14 +215,14 @@ CHARACTER_MESSAGE_RENDERED 事件
 
 | 角色 | 工作流 | 底模 | LoRA |
 | --- | --- | --- | --- |
-| 希塔姆·坎 | `K2_IG_Hitamu.json` | `waiIllustriousSDXL_v170` | `hitamu-kyan-s1-illustriousxl-lora-nochekaiser` |
-| 梅伊德娜·安洁 | `K2_IG_Maidena.json` | 同上 | `maidena-ange-s1-illustriousxl-lora-nochekaiser` |
-| 花畑·诺金斯 | `K2_IG_Hanabata.json` | 同上 | `hanabata-nohkins-s1-illustriousxl-lora-nochekaiser` |
-| 艾诺梅 | `K2_IG_Enome.json` | 同上 | `enome-s1-illustriousxl-lora-nochekaiser` |
-| 诺玛·露恩 | `K2_IG_Noma.json` | 同上 | `noma-rune-s1-illustriousxl-lora-nochekaiser` |
-| 托琪希可·达娜 | `K2_IG_Tokishikko.json` | 同上 | `tokishikko_dana_V1_IL` |
-| 基库鲁·马丹 | `K2_IG_Kikuru.json` | 同上 | `kikuru_futoku_884402` |
-| 基萨拉 | `K2_IG_Kisara.json` | Krea 2 Turbo | `Kisara_krea2` |
+| 希塔姆·坎 | `Illustrious_Hitamu_T2I.json` | `waiIllustriousSDXL_v170` | `hitamu-kyan-s1-illustriousxl-lora-nochekaiser` |
+| 梅伊德娜·安洁 | `Illustrious_Maidena_T2I.json` | 同上 | `maidena-ange-s1-illustriousxl-lora-nochekaiser` |
+| 花畑·诺金斯 | `Illustrious_Hanabata_T2I.json` | 同上 | `hanabata-nohkins-s1-illustriousxl-lora-nochekaiser` |
+| 艾诺梅 | `Illustrious_Enome_T2I.json` | 同上 | `enome-s1-illustriousxl-lora-nochekaiser` |
+| 诺玛·露恩 | `Illustrious_Noma_T2I.json` | 同上 | `noma-rune-s1-illustriousxl-lora-nochekaiser` |
+| 托琪希可·达娜 | `Illustrious_Tokishikko_T2I.json` | 同上 | `tokishikko_dana_V1_IL` |
+| 基库鲁·马丹 | `Illustrious_Kikuru_T2I.json` | 同上 | `kikuru_futoku_884402` |
+| 基萨拉 | `Krea2_Kisara_T2I.json` | Krea 2 Turbo | `Kisara_krea2` |
 
 SDXL 角色工作流默认 832×1216、28 steps、CFG 6、`dpmpp_2m` / `karras`；基萨拉 1024×1024、8 steps、CFG 1、`euler` / `simple`。这些值写在工作流里，扩展不会用全局设置覆盖。
 
@@ -257,10 +254,9 @@ SDXL 角色工作流默认 832×1216、28 steps、CFG 6、`dpmpp_2m` / `karras`�
 
 ### 生成了错误的角色
 
-- 打开“调试日志”，看 Console 里的 `character workflow`：`role` 是否是你期望的人
-- 确认角色卡名称或正文里出现了该角色的中文名/英文别名
-- 同一个正文出现多人时，扩展选**最后被提到**的人；如果不对，可以在正文里把目标角色放到最后，或用“角色 → 工作流 JSON”手动覆盖
-- 角色卡名命中优先级高于正文；如果群聊卡名本身包含某个角色，可能会固定到那个角色
+- 扩展不按角色自动切换工作流；打开“调试日志”，确认“工作流”设置里填的是你想要的那个 `Illustrious_<角色>_T2I.json` 或 `Krea2_Kisara_T2I.json`
+- 确认该工作流文件在 `data/default-user/user/workflows/` 且文件名大小写一致
+- 换角色时手动改“工作流”设置即可
 
 ### ComfyUI 报 `CUDA error: an illegal memory access`
 
@@ -310,14 +306,14 @@ sillytavern-k2-auto-image/
 ├─ comfyui/
 │  ├─ Krea2_Turbo_T2I.json    # 默认 Krea2 API 工作流（带占位符）
 │  └─ characters/             # 8 个角色 LoRA 工作流
-│     ├─ K2_IG_Hitamu.json
-│     ├─ K2_IG_Maidena.json
-│     ├─ K2_IG_Hanabata.json
-│     ├─ K2_IG_Enome.json
-│     ├─ K2_IG_Noma.json
-│     ├─ K2_IG_Tokishikko.json
-│     ├─ K2_IG_Kikuru.json
-│     └─ K2_IG_Kisara.json
+│     ├─ Illustrious_Hitamu_T2I.json
+│     ├─ Illustrious_Maidena_T2I.json
+│     ├─ Illustrious_Hanabata_T2I.json
+│     ├─ Illustrious_Enome_T2I.json
+│     ├─ Illustrious_Noma_T2I.json
+│     ├─ Illustrious_Tokishikko_T2I.json
+│     ├─ Illustrious_Kikuru_T2I.json
+│     └─ Krea2_Kisara_T2I.json
 ├─ prompts/                   # 默认提示词，便于复制/修改
 │  ├─ stage1_zh.txt
 │  ├─ stage2_en.txt
@@ -364,7 +360,7 @@ git push -u origin main
 1. 仓库地址已按 `zdd3143/sillytavern-k2-auto-image` 填好；如果你 fork 或改名，同步替换 README 的 clone 地址和 `extension/manifest.json` 的 `homePage`
 2. 确认没有把 `data/`、生成图片、模型权重、API Key 提交进去
 3. 在仓库 About 里填一句简介和 topics：`sillytavern` `comfyui` `krea2` `ollama` `anime`
-4. 打一个 `v0.3.0` tag / Release
+4. 打一个 `v0.4.0` tag / Release
 
 详细步骤和可选的 Release 说明模板见 [docs/publishing.md](docs/publishing.md)。
 

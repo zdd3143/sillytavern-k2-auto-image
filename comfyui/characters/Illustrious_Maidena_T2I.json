@@ -1,4 +1,4 @@
-{
+﻿{
   "1": {
     "class_type": "CheckpointLoaderSimple",
     "inputs": {
@@ -16,7 +16,7 @@
         "1",
         1
       ],
-      "lora_name": "tokishikko_dana_V1_IL.safetensors",
+      "lora_name": "maidena-ange-s1-illustriousxl-lora-nochekaiser.safetensors",
       "strength_model": 0.75,
       "strength_clip": 0.75
     }
@@ -96,7 +96,7 @@
         "7",
         0
       ],
-      "filename_prefix": "SillyTavern/K2Auto_IG_Tokishikko"
+      "filename_prefix": "K2Auto_Illustrious_Maidena"
     }
   }
 }

@@ -19,7 +19,19 @@ jobs:
 
       - name: Validate workflow JSON
         run: |
-          node -e "JSON.parse(require('fs').readFileSync('comfyui/Krea2_Turbo_T2I.json','utf8')); console.log('workflow json ok')"
+          node -e "
+            const fs = require('fs');
+            const dir = 'comfyui';
+            const files = [];
+            const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).forEach(e => {
+              const p = d + '/' + e.name;
+              if (e.isDirectory()) walk(p);
+              else if (e.name.endsWith('.json')) files.push(p);
+            });
+            walk(dir);
+            for (const f of files) { JSON.parse(fs.readFileSync(f, 'utf8')); console.log('ok', f); }
+            console.log('all workflow json ok:', files.length);
+          "
 
       - name: Check for obvious secrets
         run: |

@@ -1,4 +1,4 @@
-{
+﻿{
   "1": {
     "class_type": "CheckpointLoaderSimple",
     "inputs": {
@@ -96,7 +96,7 @@
         "7",
         0
       ],
-      "filename_prefix": "SillyTavern/K2Auto_IG_Hitamu"
+      "filename_prefix": "K2Auto_Illustrious_Hitamu"
     }
   }
 }
