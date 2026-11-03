@@ -17,7 +17,7 @@ if (Test-Path $extensionTarget) {
 }
 
 if ($RemoveWorkflow) {
-    $workflows = @(Join-Path $workflowTargetDir "Krea2_Turbo_T2I.json")
+    $workflows = @(Join-Path $workflowTargetDir "Krea2_Default_T2I.json")
     if (Test-Path $workflowTargetDir) {
         $workflows += Get-ChildItem $workflowTargetDir -File | Where-Object {
             $_.Name -like 'Illustrious_*_T2I.json' -or $_.Name -eq 'Krea2_Kisara_T2I.json'

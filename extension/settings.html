@@ -21,11 +21,12 @@
             <input id="k2auto_comfy_url" class="text_pole" type="text" placeholder="http://127.0.0.1:8188">
 
             <label for="k2auto_workflow_name">工作流</label>
-            <input id="k2auto_workflow_name" class="text_pole" type="text" placeholder="Krea2_Turbo_T2I.json">
+            <select id="k2auto_workflow_name" class="text_pole"></select>
 
             <div class="k2auto-hint">
-                每次生图使用这里指定的工作流文件（即 ComfyUI 里的 <code>data/default-user/user/workflows/</code> 下的文件）。
-                想要使用某个角色/底模的 LoRA 工作流，直接把文件名填在这里即可。
+                点一下展开列表，选一个后自动收起。列表来自 <code>data/default-user/user/workflows/</code>；
+                新增工作流文件后刷新页面即可出现在列表里。<br>
+                <code>Illustrious_*</code> / <code>Krea2_*</code> 是带角色 LoRA 的工作流：Illustrious 建议宽高 <b>832×1216</b>，Krea2 用 <b>1024×1024</b>。
             </div>
 
             <div class="k2auto-grid">

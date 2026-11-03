@@ -4,7 +4,7 @@
     "k2auto": {
       "enabled": false,
       "comfy_url": "http://127.0.0.1:8188",
-      "workflow_name": "Krea2_Turbo_T2I.json",
+      "workflow_name": "Krea2_Default_T2I.json",
       "width": 1024,
       "height": 1024,
       "steps": 8,

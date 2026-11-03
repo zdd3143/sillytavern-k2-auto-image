@@ -89,7 +89,7 @@ git ls-files
 .gitignore
 LICENSE
 README.md
-comfyui/Krea2_Turbo_T2I.json
+comfyui/Krea2_Default_T2I.json
 docs/...
 extension/index.js
 extension/manifest.json
@@ -290,7 +290,7 @@ jobs:
       - name: Check extension syntax
         run: node --check extension/index.js
       - name: Validate workflow JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('comfyui/Krea2_Turbo_T2I.json','utf8')); console.log('workflow json ok')"
+        run: node -e "JSON.parse(require('fs').readFileSync('comfyui/Krea2_Default_T2I.json','utf8')); console.log('workflow json ok')"
 ```
 
 > `node --check` 不解析浏览器 import，但能抓语法错误；工作流 JSON 能被解析即可。

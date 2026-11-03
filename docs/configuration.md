@@ -31,7 +31,7 @@
 | 设置 | 默认值 | 说明 |
 | --- | --- | --- |
 | 地址 | `http://127.0.0.1:8188` | 必须是 **SillyTavern 服务端**能访问的地址；不要填 `localhost` 如果 ST 在 Docker 里 |
-| 工作流 | `Krea2_Turbo_T2I.json` | 每次生图都使用这一个文件；位于 `data/default-user/user/workflows/`，大小写敏感 |
+| 工作流 | `Krea2_Default_T2I.json` | 每次生图都使用这一个文件；位于 `data/default-user/user/workflows/`，大小写敏感 |
 | 宽 | `1024` | 仅当工作流含 `%width%` 时使用；必须是 64 的倍数 |
 | 高 | `1024` | 同上 |
 | 步数 | `8` | Krea 2 Turbo 用 6–10；普通模型用 20–30 |
@@ -49,7 +49,7 @@ SillyTavern/
    └─ default-user/
       └─ user/
          └─ workflows/
-            └─ Krea2_Turbo_T2I.json
+            └─ Krea2_Default_T2I.json
 ```
 
 多用户部署时，每个用户有自己的 `data/<用户名>/user/workflows/`。扩展读取的是**当前登录用户**的目录。
@@ -79,7 +79,7 @@ SillyTavern/
    └─ default-user/
       └─ user/
          └─ workflows/
-            ├─ Krea2_Turbo_T2I.json
+            ├─ Krea2_Default_T2I.json
             ├─ Illustrious_Hitamu_T2I.json
             ├─ Illustrious_Maidena_T2I.json
             └─ ...

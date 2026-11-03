@@ -86,9 +86,9 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -SillyTavernPath "D:\Sill
 安装脚本会做两件事：
 
 1. 把 `extension/` 复制到 `SillyTavern/public/scripts/extensions/third-party/k2-auto-image/`
-2. 把 `comfyui/Krea2_Turbo_T2I.json` 和 `comfyui/characters/*.json` 复制到 `SillyTavern/data/default-user/user/workflows/`
+2. 把 `comfyui/Krea2_Default_T2I.json` 和 `comfyui/characters/*.json` 复制到 `SillyTavern/data/default-user/user/workflows/`
 
-安装后工作流目录里应有 1 个默认工作流（`Krea2_Turbo_T2I.json`）+ 8 个角色 LoRA 工作流（`Illustrious_<角色>_T2I.json` / `Krea2_Kisara_T2I.json`）。
+安装后工作流目录里应有 1 个默认工作流（`Krea2_Default_T2I.json`）+ 8 个角色 LoRA 工作流（`Illustrious_<角色>_T2I.json` / `Krea2_Kisara_T2I.json`）。
 
 也可以手动复制，目录结构见 [docs/how-it-works.md](docs/how-it-works.md)。
 
@@ -180,7 +180,7 @@ CHARACTER_MESSAGE_RENDERED 事件
 | --- | --- | --- |
 | 启用 | 关 | 勾选后每条 AI 回复自动生成 |
 | ComfyUI 地址 | `http://127.0.0.1:8188` | 必须是 SillyTavern 服务端能访问的地址 |
-| 工作流 | `Krea2_Turbo_T2I.json` | 位于 `data/default-user/user/workflows/`；想用某个角色 LoRA 就填对应文件名 |
+| 工作流 | `Krea2_Default_T2I.json` | 位于 `data/default-user/user/workflows/`；想用某个角色 LoRA 就填对应文件名 |
 | 宽 / 高 | 1024 / 1024 | 8GB 显存建议 768 或 1024 |
 | 步数 / CFG | 8 / 1 | Krea 2 Turbo 用低步数、CFG 1 |
 | 采样器 / 调度器 | `euler` / `simple` | 与工作流一致 |
@@ -196,7 +196,7 @@ CHARACTER_MESSAGE_RENDERED 事件
 
 ## 工作流占位符
 
-`comfyui/Krea2_Turbo_T2I.json` 是一个 ComfyUI **API 格式**工作流，扩展会替换以下占位符（必须保留引号，例如 `"%prompt%"`）：
+`comfyui/Krea2_Default_T2I.json` 是一个 ComfyUI **API 格式**工作流，扩展会替换以下占位符（必须保留引号，例如 `"%prompt%"`）：
 
 | 占位符 | 替换为 |
 | --- | --- |
@@ -241,7 +241,7 @@ SDXL 角色工作流默认 832×1216、28 steps、CFG 6、`dpmpp_2m` / `karras`�
 
 ### 报“读取工作流失败”
 
-- 工作流是否在 `data/default-user/user/workflows/Krea2_Turbo_T2I.json`
+- 工作流是否在 `data/default-user/user/workflows/Krea2_Default_T2I.json`
 - 文件名是否和设置里完全一致（含大小写）
 - 是否重启过 SillyTavern
 
@@ -304,7 +304,7 @@ sillytavern-k2-auto-image/
 │  ├─ settings.html           # 设置面板
 │  └─ style.css
 ├─ comfyui/
-│  ├─ Krea2_Turbo_T2I.json    # 默认 Krea2 API 工作流（带占位符）
+│  ├─ Krea2_Default_T2I.json    # 默认 Krea2 API 工作流（带占位符）
 │  └─ characters/             # 8 个角色 LoRA 工作流
 │     ├─ Illustrious_Hitamu_T2I.json
 │     ├─ Illustrious_Maidena_T2I.json

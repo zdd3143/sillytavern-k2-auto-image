@@ -14,7 +14,7 @@ if (-not (Test-Path (Join-Path $stPath "config.yaml"))) {
 
 $extensionSource = Join-Path $repo "extension"
 $extensionTarget = Join-Path $stPath "public\scripts\extensions\third-party\k2-auto-image"
-$workflowSource = Join-Path $repo "comfyui\Krea2_Turbo_T2I.json"
+$workflowSource = Join-Path $repo "comfyui\Krea2_Default_T2I.json"
 $characterWorkflowSource = Join-Path $repo "comfyui\characters"
 $workflowTargetDir = Join-Path $stPath ("data\{0}\user\workflows" -f $User)
 

@@ -39,7 +39,7 @@
 
 ```powershell
 node --check .\extension\index.js
-node -e "JSON.parse(require('fs').readFileSync('comfyui/Krea2_Turbo_T2I.json','utf8'))"
+node -e "JSON.parse(require('fs').readFileSync('comfyui/Krea2_Default_T2I.json','utf8'))"
 ```
 
 ## 代码风格

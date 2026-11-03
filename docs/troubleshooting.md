@@ -103,13 +103,13 @@ node --check .\extension\index.js
 或：
 
 ```text
-工作流不是合法 JSON: Krea2_Turbo_T2I.json
+工作流不是合法 JSON: Krea2_Default_T2I.json
 ```
 
 ### 检查文件位置
 
 ```text
-SillyTavern/data/default-user/user/workflows/Krea2_Turbo_T2I.json
+SillyTavern/data/default-user/user/workflows/Krea2_Default_T2I.json
 ```
 
 多用户时是：
@@ -125,7 +125,7 @@ SillyTavern/data/<你的用户名>/user/workflows/
 ### 检查 JSON
 
 ```powershell
-Get-Content "D:\SillyTavern\data\default-user\user\workflows\Krea2_Turbo_T2I.json" -Raw | ConvertFrom-Json
+Get-Content "D:\SillyTavern\data\default-user\user\workflows\Krea2_Default_T2I.json" -Raw | ConvertFrom-Json
 ```
 
 没有报错才是合法 JSON。
@@ -508,7 +508,7 @@ Ollama 地址填 http://<那台机器IP>:11434/v1
 
 最小化排查：
 
-1. 用仓库自带的 `Krea2_Turbo_T2I.json`，不要改；
+1. 用仓库自带的 `Krea2_Default_T2I.json`，不要改；
 2. 用默认 1024×1024 / 8 steps / euler / simple；
 3. 用 `ollama run` 确认模型能回复；
 4. 用 ComfyUI 网页手动跑通工作流；

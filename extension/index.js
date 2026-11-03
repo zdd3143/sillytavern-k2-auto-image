@@ -80,7 +80,7 @@ const DEFAULT_NEGATIVE = [
 const DEFAULT_SETTINGS = Object.freeze({
     enabled: false,
     comfy_url: 'http://127.0.0.1:8188',
-    workflow_name: 'Krea2_Turbo_T2I.json',
+    workflow_name: 'Krea2_Default_T2I.json',
     width: 1024,
     height: 1024,
     steps: 8,
@@ -115,6 +115,19 @@ let settings = null;
 let busy = false;
 let lastSignature = '';
 let statusTimer = null;
+
+// 工作流在设置里显示成中文名；value 仍然是真实文件名。
+const WORKFLOW_LABELS = {
+    'Krea2_Default_T2I.json': 'Krea2 默认 · 文生图',
+    'Krea2_Kisara_T2I.json': 'Krea2 基萨拉 · 文生图',
+    'Illustrious_Hitamu_T2I.json': 'Illustrious 希塔姆 · 文生图',
+    'Illustrious_Maidena_T2I.json': 'Illustrious 梅伊德娜 · 文生图',
+    'Illustrious_Hanabata_T2I.json': 'Illustrious 花畑 · 文生图',
+    'Illustrious_Enome_T2I.json': 'Illustrious 艾诺梅 · 文生图',
+    'Illustrious_Noma_T2I.json': 'Illustrious 诺玛 · 文生图',
+    'Illustrious_Tokishikko_T2I.json': 'Illustrious 托琪希可 · 文生图',
+    'Illustrious_Kikuru_T2I.json': 'Illustrious 基库鲁 · 文生图',
+};
 
 function getSettings() {
     if (!extension_settings[MODULE_NAME] || typeof extension_settings[MODULE_NAME] !== 'object') {
@@ -841,6 +854,65 @@ function bindCheck(id, key) {
     });
 }
 
+function bindSelect(id, key) {
+    const el = document.getElementById(id);
+    if (!el) {
+        return;
+    }
+    el.addEventListener('change', () => {
+        settings[key] = el.value;
+        saveSettingsDebounced();
+    });
+}
+
+/**
+ * Fill the workflow dropdown from SillyTavern's workflow list, so the user can
+ * click once, pick a file and have the list collapse by itself. Falls back to
+ * the currently saved value when the list cannot be read.
+ */
+async function loadWorkflowOptions() {
+    const select = document.getElementById('k2auto_workflow_name');
+    if (!select) {
+        return;
+    }
+
+    let files = [];
+    try {
+        const response = await fetch('/api/sd/comfy/workflows', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                files = data.filter(item => typeof item === 'string');
+            }
+        }
+    } catch (error) {
+        log('读取工作流列表失败', error);
+    }
+
+    if (!files.length) {
+        files = [settings.workflow_name];
+    }
+    if (!files.includes(settings.workflow_name)) {
+        files.unshift(settings.workflow_name);
+    }
+
+    // 带中文标签的自带工作流按固定顺序排前面，其余原样跟上。
+    const known = Object.keys(WORKFLOW_LABELS).filter(file => files.includes(file));
+    const others = files.filter(file => !known.includes(file));
+
+    select.innerHTML = '';
+    for (const file of [...known, ...others]) {
+        const option = document.createElement('option');
+        option.value = file;
+        option.textContent = WORKFLOW_LABELS[file] || file;
+        select.appendChild(option);
+    }
+    select.value = settings.workflow_name;
+}
+
 function loadUi() {
     const values = {
         k2auto_enabled: settings.enabled,
@@ -905,10 +977,11 @@ async function init() {
     const html = await renderExtensionTemplateAsync('third-party/k2-auto-image', 'settings');
     document.getElementById('extensions_settings2')?.insertAdjacentHTML('beforeend', html);
     loadUi();
+    void loadWorkflowOptions();
 
     bindCheck('k2auto_enabled', 'enabled');
     bindText('k2auto_comfy_url', 'comfy_url');
-    bindText('k2auto_workflow_name', 'workflow_name');
+    bindSelect('k2auto_workflow_name', 'workflow_name');
     bindNumber('k2auto_width', 'width');
     bindNumber('k2auto_height', 'height');
     bindNumber('k2auto_steps', 'steps');

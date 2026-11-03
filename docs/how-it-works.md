@@ -198,7 +198,7 @@ character.scenario
 
 ### 4.4 工作流选择
 
-扩展**不按角色自动路由**。每次生图都使用设置里的 `workflow_name`（默认 `Krea2_Turbo_T2I.json`）：
+扩展**不按角色自动路由**。每次生图都使用设置里的 `workflow_name`（默认 `Krea2_Default_T2I.json`）：
 
 ```js
 const result = await generateImage(prompt);
@@ -210,7 +210,7 @@ const result = await generateImage(prompt);
 
 | 工作流 | 说明 |
 | --- | --- |
-| `Krea2_Turbo_T2I.json` | 默认，Krea 2 Turbo 纯文生图，无角色 LoRA |
+| `Krea2_Default_T2I.json` | 默认，Krea 2 Turbo 纯文生图，无角色 LoRA |
 | `Krea2_Kisara_T2I.json` | Krea 2 + `Kisara_krea2` LoRA |
 | `Illustrious_<角色>_T2I.json` | `waiIllustriousSDXL_v170` + 对应 Illustrious 角色 LoRA |
 
@@ -341,10 +341,10 @@ POST /api/sd/comfy/workflow
 ```
 
 ```json
-{ "file_name": "Krea2_Turbo_T2I.json" }
+{ "file_name": "Krea2_Default_T2I.json" }
 ```
 
-这个接口从当前用户的 `data/<user>/user/workflows/` 读取文件，返回原始 JSON 文本。`file_name` 来自设置里的“工作流”（默认 `Krea2_Turbo_T2I.json`）。
+这个接口从当前用户的 `data/<user>/user/workflows/` 读取文件，返回原始 JSON 文本。`file_name` 来自设置里的“工作流”（默认 `Krea2_Default_T2I.json`）。
 
 读取前会先请求 `/api/sd/comfy/workflows` 校验文件名存在，避免 SillyTavern 在文件缺失时静默回退到 `Default_Comfy_Workflow.json`。
 
@@ -408,7 +408,7 @@ POST /api/sd/comfy/generate
 
 ### 7.4 工作流格式
 
-`comfyui/Krea2_Turbo_T2I.json` 是 **API 格式**，不是 ComfyUI 网页里“另存为”的 UI 格式。
+`comfyui/Krea2_Default_T2I.json` 是 **API 格式**，不是 ComfyUI 网页里“另存为”的 UI 格式。
 
 API 格式长这样：
 
@@ -539,7 +539,7 @@ extension_settings.k2auto
 {
   enabled: false,
   comfy_url: 'http://127.0.0.1:8188',
-  workflow_name: 'Krea2_Turbo_T2I.json',
+  workflow_name: 'Krea2_Default_T2I.json',
   width: 1024,
   height: 1024,
   steps: 8,
@@ -635,7 +635,7 @@ SillyTavern 在页面初始化时加载 `manifest.json` 里声明的 `index.js` 
 | `extension/settings.html` | 设置面板 |
 | `extension/style.css` | 面板样式 |
 | `extension/manifest.json` | 扩展元数据 |
-| `comfyui/Krea2_Turbo_T2I.json` | 默认 API 工作流 |
+| `comfyui/Krea2_Default_T2I.json` | 默认 API 工作流 |
 | `prompts/*.txt` | 默认提示词文本 |
 | `docs/configuration.md` | 每个设置项 |
 | `docs/troubleshooting.md` | 排错 |

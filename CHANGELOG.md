@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.1
+
+工作流改成下拉选择；默认工作流按同一命名规则改名。
+
+### 变更
+
+- 设置面板的“工作流”由文本框改为下拉框：点一下展开 `data/<user>/user/workflows/` 里的全部工作流，选一个后自动收起
+- 下拉项显示中文名（如 `Illustrious 希塔姆 · 文生图`），实际保存的仍是文件名
+- 默认工作流 `Krea2_Turbo_T2I.json` → `Krea2_Default_T2I.json`，现在所有自带工作流都遵循 `底模_角色_方式`：
+  - `Krea2_Default_T2I.json`（默认，无角色 LoRA）
+  - `Krea2_Kisara_T2I.json`
+  - `Illustrious_<角色>_T2I.json`
+- 相关引用（安装/卸载脚本、README、docs、示例设置）同步更新
+- 版本号 0.4.1
+
+### 升级提示
+
+- 旧文件 `Krea2_Turbo_T2I.json` 不会再被使用，可手动删除 `data/<user>/user/workflows/` 下的旧文件
+- 如果 `settings.json` 里 `extension_settings.k2auto.workflow_name` 仍是旧名，改选一次下拉项即可
+
 ## 0.4.0
 
 删除角色自动路由；工作流文件保留，改为“底模 + 角色 + 生成方式”命名。
