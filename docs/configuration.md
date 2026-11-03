@@ -85,7 +85,7 @@ SillyTavern/
             └─ ...
 ```
 
-每个角色工作流内部已经写死了底模、LoRA（强度 0.75）、步数、CFG 和采样器，扩展只替换 `%prompt%`、`%negative_prompt%`、`%seed%`、`%width%`、`%height%`。因此设置面板里的“步数/CFG/采样器”只对含这些占位符的工作流（例如默认 Krea2 工作流）生效。
+每个角色工作流内部写死底模和 LoRA（强度 0.75），但尺寸、步数、CFG、采样器、调度器都是占位符（`%width%`/`%height%`/`%steps%`/`%scale%`/`%sampler%`/`%scheduler%`/`%denoise%`）。选中工作流时扩展会自动套用推荐值（Illustrious：832×1216、28 步、CFG 6；Krea2：1024×1024、8 步、CFG 1），之后在面板里改步数/CFG/采样器会直接生效。
 
 想自己加一个角色：复制任意一个角色工作流，把 `LoraLoader.lora_name` 改成你的 LoRA 文件名，并按“底模_角色_T2I.json”命名，放进 `workflows/`，然后在设置里选择它。
 
@@ -332,7 +332,7 @@ realistic skin texture, monochrome, muted colors
 
 不需要改一行 JS。
 
-如果要做“角色 LoRA 工作流”，推荐直接把模型/LoRA/采样参数写死在工作流里，而不是用全局 `%model%`：
+如果要做“角色 LoRA 工作流”，推荐把模型和 LoRA 写在工作流里，采样参数继续用占位符，这样面板里还能调：
 
 ```json
 "10": {
@@ -401,7 +401,7 @@ LLM: 7B Qwen
 延迟: 1800
 ```
 
-> 上面的步数/CFG/采样器只对含这些占位符的工作流生效。角色工作流（`Illustrious_*_T2I.json` / `Krea2_Kisara_T2I.json`）内部写死 SDXL 28 steps / CFG 6 或 Krea2 8 steps / CFG 1；8GB 显卡实测 832×1216 SDXL 可以跑，连续切换多个 LoRA 后如果 ComfyUI 崩，重启它或改用低显存启动脚本。
+> 步数/CFG/采样器对所有自带工作流都生效（它们都使用占位符）。角色工作流（`Illustrious_*_T2I.json` / `Krea2_Kisara_T2I.json`）默认套用 SDXL 28 steps / CFG 6 或 Krea2 8 steps / CFG 1，可以在面板里改；8GB 显卡实测 832×1216 SDXL 可以跑，连续切换多个 LoRA 后如果 ComfyUI 崩，重启它或改用低显存启动脚本。
 
 ### 12GB+ 显卡
 

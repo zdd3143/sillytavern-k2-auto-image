@@ -214,7 +214,7 @@ const result = await generateImage(prompt);
 | `Krea2_Kisara_T2I.json` | Krea 2 + `Kisara_krea2` LoRA |
 | `Illustrious_<角色>_T2I.json` | `waiIllustriousSDXL_v170` + 对应 Illustrious 角色 LoRA |
 
-想画某个角色，就在设置里的“工作流”下拉中选对应项；扩展不会自己切换。选中后 `applyWorkflowPreset()` 会把该工作流的推荐宽高/步数/CFG/采样器写进设置并刷新面板（角色工作流内部仍以自己的硬编码参数为准，推荐值只用于保持面板一致）。
+想画某个角色，就在设置里的“工作流”下拉中选对应项；扩展不会自己切换。选中后 `applyWorkflowPreset()` 会把该工作流的推荐宽高/步数/CFG/采样器写进设置并刷新面板；工作流里的采样参数是占位符，所以之后在面板里改这些值会真正传给 ComfyUI。
 
 ---
 
@@ -438,8 +438,8 @@ API 格式长这样：
 
 - SDXL 角色用 `CheckpointLoaderSimple` 加载 `waiIllustriousSDXL_v170.safetensors`，再用 `LoraLoader` 加载对应角色 LoRA；
 - `LoraLoader` 的 `model` 接底模输出 0，`clip` 接底模输出 1；
-- 采样参数写死为 28 steps / CFG 6 / `dpmpp_2m` / `karras`；
-- 只有 `%prompt%`、`%negative_prompt%`、`%seed%`、`%width%`、`%height%` 是占位符，模型/LoRA/步数/CFG 不开放覆盖。
+- 采样参数（`steps`/`cfg`/`sampler_name`/`scheduler`/`denoise`）使用 `%steps%`/`%scale%`/`%sampler%`/`%scheduler%`/`%denoise%` 占位符，默认套用 28 steps / CFG 6 / `dpmpp_2m` / `karras`，可在面板里改；
+- 模型和 LoRA 名是写死的；`%prompt%`、`%negative_prompt%`、`%seed%`、`%width%`、`%height%` 及采样参数占位符由扩展替换。
 
 如果你只有 UI 格式工作流，可以用 ComfyUI 的“Save (API Format)”导出，或者用 `ComfyUI-to-API` 类工具转换。
 

@@ -130,10 +130,11 @@ const WORKFLOW_LABELS = {
 };
 
 // 每个自带工作流推荐的生成参数。选中工作流时自动套用，避免手改宽高/步数。
-const ILLUSTRIOUS_PRESET = { width: 832, height: 1216, steps: 28, scale: 6, sampler: 'dpmpp_2m', scheduler: 'karras' };
+// 这些值只是初始推荐；工作流里的对应字段都是占位符，之后可以在面板里自由修改。
+const ILLUSTRIOUS_PRESET = { width: 832, height: 1216, steps: 28, scale: 6, sampler: 'dpmpp_2m', scheduler: 'karras', denoise: 1 };
 const WORKFLOW_PRESETS = {
-    'Krea2_Default_T2I.json': { width: 1024, height: 1024, steps: 8, scale: 1, sampler: 'euler', scheduler: 'simple' },
-    'Krea2_Kisara_T2I.json': { width: 1024, height: 1024, steps: 8, scale: 1, sampler: 'euler', scheduler: 'simple' },
+    'Krea2_Default_T2I.json': { width: 1024, height: 1024, steps: 8, scale: 1, sampler: 'euler', scheduler: 'simple', denoise: 1 },
+    'Krea2_Kisara_T2I.json': { width: 1024, height: 1024, steps: 8, scale: 1, sampler: 'euler', scheduler: 'simple', denoise: 1 },
     'Illustrious_Hitamu_T2I.json': ILLUSTRIOUS_PRESET,
     'Illustrious_Maidena_T2I.json': ILLUSTRIOUS_PRESET,
     'Illustrious_Hanabata_T2I.json': ILLUSTRIOUS_PRESET,
