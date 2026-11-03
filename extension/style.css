@@ -1,0 +1,69 @@
+.k2auto-settings .k2auto-hint {
+    margin: 0.4rem 0 0.6rem;
+    opacity: 0.75;
+    font-size: 0.9em;
+    line-height: 1.45;
+}
+
+.k2auto-settings hr {
+    margin: 0.9rem 0;
+    border: 0;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+    opacity: 0.45;
+}
+
+.k2auto-settings label {
+    display: block;
+    margin-top: 0.45rem;
+    font-size: 0.92em;
+}
+
+.k2auto-settings .checkbox_label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.k2auto-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 0.7rem;
+}
+
+.k2auto-grid label {
+    margin-top: 0;
+}
+
+.k2auto-settings details {
+    margin-top: 0.6rem;
+}
+
+.k2auto-settings summary {
+    cursor: pointer;
+    opacity: 0.85;
+    margin: 0.5rem 0;
+}
+
+.k2auto-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+}
+
+.k2auto-status {
+    min-height: 1.4em;
+    margin-top: 0.5rem;
+    font-size: 0.9em;
+    opacity: 0.85;
+    white-space: pre-wrap;
+}
+
+.k2auto-status.k2auto-error {
+    color: var(--warning);
+    opacity: 1;
+}
+
+.k2auto-settings textarea.textarea_compact {
+    min-height: unset;
+    resize: vertical;
+}

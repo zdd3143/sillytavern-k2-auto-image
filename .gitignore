@@ -1,0 +1,32 @@
+# SillyTavern runtime data
+data/
+logs/
+*.log
+
+# Generated images
+outputs/
+SillyTavern/
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# 文档截图是例外（请先确认无隐私）
+!docs/images/
+!docs/images/*.png
+!docs/images/*.jpg
+!docs/images/*.jpeg
+!docs/images/*.webp
+
+# Local environment
+.env
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

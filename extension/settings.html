@@ -1,0 +1,154 @@
+<div class="k2auto-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>K2 自动配图</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <label class="checkbox_label" for="k2auto_enabled">
+                <input id="k2auto_enabled" type="checkbox">
+                <span>每条 AI 回复后自动生成一张图片</span>
+            </label>
+
+            <div class="k2auto-hint">
+                只读取最后一条 AI 正文（优先 <code>&lt;game&gt;</code>），不把聊天历史发给生图模型。
+                首次使用请先点“测试连接”，再用“立即生成”验证。
+            </div>
+
+            <hr>
+            <b>ComfyUI</b>
+            <label for="k2auto_comfy_url">地址</label>
+            <input id="k2auto_comfy_url" class="text_pole" type="text" placeholder="http://127.0.0.1:8188">
+
+            <label for="k2auto_workflow_name">工作流文件名（放在 user/workflows）</label>
+            <input id="k2auto_workflow_name" class="text_pole" type="text" placeholder="Krea2_Turbo_T2I.json">
+
+            <div class="k2auto-grid">
+                <div>
+                    <label for="k2auto_width">宽</label>
+                    <input id="k2auto_width" class="text_pole" type="number" min="64" max="2048" step="64">
+                </div>
+                <div>
+                    <label for="k2auto_height">高</label>
+                    <input id="k2auto_height" class="text_pole" type="number" min="64" max="2048" step="64">
+                </div>
+                <div>
+                    <label for="k2auto_steps">步数</label>
+                    <input id="k2auto_steps" class="text_pole" type="number" min="1" max="100">
+                </div>
+                <div>
+                    <label for="k2auto_scale">CFG</label>
+                    <input id="k2auto_scale" class="text_pole" type="number" min="1" max="30" step="0.1">
+                </div>
+                <div>
+                    <label for="k2auto_sampler">采样器</label>
+                    <input id="k2auto_sampler" class="text_pole" type="text" placeholder="euler">
+                </div>
+                <div>
+                    <label for="k2auto_scheduler">调度器</label>
+                    <input id="k2auto_scheduler" class="text_pole" type="text" placeholder="simple">
+                </div>
+                <div>
+                    <label for="k2auto_denoise">Denoise</label>
+                    <input id="k2auto_denoise" class="text_pole" type="number" min="0" max="1" step="0.05">
+                </div>
+                <div>
+                    <label for="k2auto_seed">种子（-1 随机）</label>
+                    <input id="k2auto_seed" class="text_pole" type="number" step="1">
+                </div>
+            </div>
+
+            <details>
+                <summary>工作流占位符覆盖（可选）</summary>
+                <label for="k2auto_model">模型名（替换 %model%）</label>
+                <input id="k2auto_model" class="text_pole" type="text" placeholder="留空则用工作流里的值">
+                <label for="k2auto_vae">VAE（替换 %vae%）</label>
+                <input id="k2auto_vae" class="text_pole" type="text" placeholder="留空则用工作流里的值">
+                <label for="k2auto_clip_skip">Clip skip（替换 %clip_skip%）</label>
+                <input id="k2auto_clip_skip" class="text_pole" type="number" step="1">
+                <label for="k2auto_ref_image">角色参考图（替换 %char_ref_image%）</label>
+                <input id="k2auto_ref_image" class="text_pole" type="text" placeholder="例如 refs/hero.png，位于 ComfyUI/input">
+            </details>
+
+            <hr>
+            <b>本地提示词模型（Ollama / OpenAI 兼容）</b>
+            <label for="k2auto_llm_url">接口地址</label>
+            <input id="k2auto_llm_url" class="text_pole" type="text" placeholder="http://127.0.0.1:11434/v1">
+            <label for="k2auto_llm_model">模型名</label>
+            <input id="k2auto_llm_model" class="text_pole" type="text" placeholder="qwen2.5-7b-instruct">
+            <div class="k2auto-grid">
+                <div>
+                    <label for="k2auto_llm_timeout">超时（毫秒）</label>
+                    <input id="k2auto_llm_timeout" class="text_pole" type="number" min="10000" step="1000">
+                </div>
+                <div>
+                    <label for="k2auto_delay">回复后延迟（毫秒）</label>
+                    <input id="k2auto_delay" class="text_pole" type="number" min="0" step="100">
+                </div>
+            </div>
+
+            <label class="checkbox_label" for="k2auto_use_book">
+                <input id="k2auto_use_book" type="checkbox">
+                <span>读取角色卡世界书里的外形设定</span>
+            </label>
+            <label class="checkbox_label" for="k2auto_card_fields">
+                <input id="k2auto_card_fields" type="checkbox">
+                <span>读取角色卡 Description / Personality / Scenario</span>
+            </label>
+
+            <hr>
+            <b>提示词</b>
+            <label for="k2auto_quality_prefix">质量前缀</label>
+            <textarea id="k2auto_quality_prefix" class="text_pole textarea_compact" rows="3"></textarea>
+            <label for="k2auto_negative">负面提示词</label>
+            <textarea id="k2auto_negative" class="text_pole textarea_compact" rows="3"></textarea>
+
+            <details>
+                <summary>高级：两段式提示词模板</summary>
+                <p class="k2auto-hint">
+                    第一段让本地模型用中文写分镜；第二段只做英文翻译。修改时保留两段的分工，
+                    否则模型容易直接照抄对白或剧情。
+                </p>
+                <label for="k2auto_stage1_system">第一段：中文分镜 system</label>
+                <textarea id="k2auto_stage1_system" class="text_pole textarea_compact" rows="12"></textarea>
+                <div class="k2auto-grid">
+                    <div>
+                        <label for="k2auto_stage1_temp">第一段 temperature</label>
+                        <input id="k2auto_stage1_temp" class="text_pole" type="number" min="0" max="2" step="0.1">
+                    </div>
+                    <div>
+                        <label for="k2auto_stage1_tokens">第一段 max tokens</label>
+                        <input id="k2auto_stage1_tokens" class="text_pole" type="number" min="64" max="2048" step="1">
+                    </div>
+                </div>
+
+                <label for="k2auto_stage2_system">第二段：英文翻译 system</label>
+                <textarea id="k2auto_stage2_system" class="text_pole textarea_compact" rows="6"></textarea>
+                <div class="k2auto-grid">
+                    <div>
+                        <label for="k2auto_stage2_temp">第二段 temperature</label>
+                        <input id="k2auto_stage2_temp" class="text_pole" type="number" min="0" max="2" step="0.1">
+                    </div>
+                    <div>
+                        <label for="k2auto_stage2_tokens">第二段 max tokens</label>
+                        <input id="k2auto_stage2_tokens" class="text_pole" type="number" min="64" max="2048" step="1">
+                    </div>
+                </div>
+            </details>
+
+            <label for="k2auto_image_message_text">图片消息附带的文字（可留空）</label>
+            <input id="k2auto_image_message_text" class="text_pole" type="text">
+
+            <label class="checkbox_label" for="k2auto_debug">
+                <input id="k2auto_debug" type="checkbox">
+                <span>调试日志（浏览器 Console）</span>
+            </label>
+
+            <div class="k2auto-actions">
+                <input id="k2auto_test" class="menu_button" type="button" value="测试连接">
+                <input id="k2auto_generate" class="menu_button" type="button" value="立即生成">
+            </div>
+            <div id="k2auto_status" class="k2auto-status"></div>
+        </div>
+    </div>
+</div>

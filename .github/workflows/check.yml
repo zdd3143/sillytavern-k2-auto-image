@@ -1,0 +1,29 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check extension syntax
+        run: node --check extension/index.js
+
+      - name: Validate workflow JSON
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('comfyui/Krea2_Turbo_T2I.json','utf8')); console.log('workflow json ok')"
+
+      - name: Check for obvious secrets
+        run: |
+          if grep -RInE "sk-[A-Za-z0-9]{20,}|Bearer [A-Za-z0-9._-]{20,}" --exclude-dir=.git .; then
+            echo "Potential secret found"
+            exit 1
+          fi
