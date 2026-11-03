@@ -709,7 +709,7 @@ function replacePlaceholders(template, values) {
 }
 
 async function buildWorkflow(prompt, options = {}) {
-    const workflowName = options.workflow_name || settings.workflow_name;
+    const workflowName = options.workflow_name || options.workflow || settings.workflow_name;
     const template = await loadWorkflow(workflowName);
     const seed = Number(settings.seed) >= 0
         ? Number(settings.seed)
