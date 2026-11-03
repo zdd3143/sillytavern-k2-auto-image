@@ -225,6 +225,25 @@ Windows 直接看启动 ComfyUI 的终端；如果是 `run_nvidia_gpu.bat`，窗
 - SillyTavern 在 Docker，ComfyUI 在宿主机：`http://host.docker.internal:8188`
 - 不要填 `http://localhost:8188` 如果 ST 在容器里（容器里的 localhost 是容器自己）
 
+### CUDA error: illegal memory access
+
+现象：ComfyUI 在 LoRA 加载/采样时直接退出，日志末尾是：
+
+```text
+ERROR lora diffusion_model... CUDA error: an illegal memory access was encountered
+Fatal Python error: Aborted
+```
+
+这不是工作流 JSON 或扩展的问题，常见于 8GB 显存连续切换多个 SDXL LoRA 后的驱动/显存状态。处理顺序：
+
+1. 完全退出 ComfyUI，重新启动，再跑同一个工作流；
+2. 用 `启动ComfyUI-低显存.bat`（`--lowvram`）；
+3. 把 SDXL 工作流分辨率降到 768×1152；
+4. 降低 LoRA `strength_model` 或换一个 LoRA 文件；
+5. 更新显卡驱动/ComfyUI。
+
+重启后能恢复就说明是运行时状态问题，不需要改扩展代码。
+
 ---
 
 ## 6. 本地 LLM 返回 400 / 404
@@ -399,6 +418,14 @@ SillyTavern/data/default-user/user/images/
 
 打开调试日志，看最终 prompt 里有没有人物外形。
 
+### 生成了错误的角色
+
+1. 打开调试日志，看 Console 里的 `character workflow`，确认 `role` 和 `workflow`；
+2. 检查当前角色卡名、`data.name`、头像是否包含别名；
+3. 群聊/多人卡按正文里**最后出现**的角色选；如果不对，把目标角色放到正文最后，或用“角色 → 工作流 JSON”手动覆盖；
+4. 角色卡名命中优先级高于正文；如果卡名本身包含某角色，会固定选该角色；
+5. 确认 `K2_IG_*.json` 在 `data/<user>/user/workflows/` 且文件名大小写一致。
+
 ---
 
 ## 11. 提示词照抄对白 / 写剧情
@@ -431,7 +458,8 @@ SillyTavern/data/default-user/user/images/
 
 - 7B LLM 两次调用：5–20 秒（GPU）；
 - Krea 2 Turbo 1024×1024 / 8 steps：10–30 秒（8GB 笔记本）；
-- 总计：30–60 秒。
+- SDXL 832×1216 / 28 steps：约 25–45 秒（8GB 笔记本，首次加载更久）；
+- 总计：Krea2 约 25–60 秒，SDXL 约 30–70 秒。
 
 如果超过 2 分钟：
 

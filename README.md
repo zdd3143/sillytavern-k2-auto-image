@@ -1,6 +1,8 @@
 # SillyTavern K2 Auto Image
 
-给 [SillyTavern](https://github.com/SillyTavern/SillyTavern) 用的**本地自动配图扩展**：每收到一条 AI 正文，就提取当前场景和人物设定，让本地 Qwen 写成生图提示词，再调用本地 ComfyUI（默认 Krea 2 Turbo）生成一张现代日本 TV 动画风格的插图，并自动贴回聊天。
+给 [SillyTavern](https://github.com/SillyTavern/SillyTavern) 用的**本地自动配图扩展**：每收到一条 AI 正文，就提取当前场景和人物设定，让本地 Qwen 写成生图提示词，再调用本地 ComfyUI 生成一张现代日本 TV 动画风格的插图，并自动贴回聊天。
+
+默认使用 Krea 2 Turbo；也支持按当前生图人物自动切换到 SDXL/Illustrious + 角色 LoRA 的工作流，适合“不道德公会”这类多角色卡。
 
 整个流程都在本机完成：
 
@@ -19,6 +21,8 @@
 - **人物设定**：读取当前角色卡的 `Description / Personality / Scenario`，以及角色卡世界书里与正文人物匹配的外形条目（基础信息、身高骨架、体脂、皮肤、面部、发型、日常外穿、鞋袜、配饰、体态、气味）。
 - **两段式本地提示词**：第一段让 Qwen 用中文写“以人物为中心的静止分镜”；第二段只做英文翻译，避免模型照抄对白和连续剧情。
 - **固定动漫风格**：质量前缀锁定 `modern Japanese TV anime`，负面词排除 `photorealistic / 3d render / live action / CGI`。
+- **角色自适应工作流**：根据当前角色卡名称和正文里最后出现的角色别名，自动选择对应 LoRA 工作流；卡名命中优先，群聊/多人场景按正文最后提及者选择，未命中回退默认工作流。
+- **两套底模**：7 个角色使用 `waiIllustriousSDXL_v170` + Illustrious 角色 LoRA；基萨拉使用 Krea 2 Turbo + `Kisara_krea2` LoRA。每个工作流已把模型、LoRA、步数、CFG 写死，扩展只替换提示词/种子/尺寸。
 - **一条文本一张图**：只处理没有媒体的 AI 消息；生成出的图片消息会被识别并跳过；同一正文有签名去重。
 - **可配置**：ComfyUI 地址、工作流、分辨率、步数、CFG、采样器、种子、本地 LLM 地址/模型、两段 system prompt、质量前缀、负面词。
 - **手动测试**：设置面板里有“测试连接”和“立即生成”，不用先发消息。
@@ -46,7 +50,7 @@
 | 显卡 | 8GB 显存可跑 1024×1024 / 8 steps；更低显存建议 768 | RTX 4060 Laptop 8GB |
 | Ollama | OpenAI 兼容 `/v1` 接口 | 最新版 |
 | 本地 LLM | 7B 级别，中文写作 + 英文翻译 | `richardyoung/qwen2.5-7b-instruct-abliterated:latest` |
-| 生图模型 | Krea 2 Turbo + Qwen3-VL 文本编码器 + Qwen Image VAE | 见下方模型表 |
+| 生图模型 | Krea 2 Turbo（基萨拉/默认）或 SDXL/Illustrious（7 个角色 LoRA） | 见下方模型表 |
 
 ### 模型文件
 
@@ -54,11 +58,14 @@
 
 | 文件 | 放到 | 作用 |
 | --- | --- | --- |
-| `krea2Turbo_v10_2951489.safetensors` | `ComfyUI/models/diffusion_models/` | Krea 2 Turbo 主模型 |
-| `qwen3vl_4b_abliterated_fp8_scaled.safetensors` | `ComfyUI/models/text_encoders/` | 文本编码器 |
-| `qwen_image_vae.safetensors` | `ComfyUI/models/vae/` | VAE |
+| `krea2Turbo_v10_2951489.safetensors` | `ComfyUI/models/diffusion_models/` | Krea 2 Turbo 主模型（基萨拉/默认） |
+| `qwen3vl_4b_abliterated_fp8_scaled.safetensors` | `ComfyUI/models/text_encoders/` | Krea 2 文本编码器 |
+| `qwen_image_vae.safetensors` | `ComfyUI/models/vae/` | Krea 2 VAE |
+| `waiIllustriousSDXL_v170.safetensors` | `ComfyUI/models/checkpoints/` | SDXL/Illustrious 底模（7 个角色） |
+| `hitamu-kyan-s1-illustriousxl-lora-nochekaiser.safetensors` 等 7 个角色 LoRA | `ComfyUI/models/loras/` | 对应角色外观；文件名见 `comfyui/characters/*.json` |
+| `Kisara_krea2.safetensors` | `ComfyUI/models/loras/` | 基萨拉 Krea 2 LoRA |
 
-> 模型权重不包含在本仓库中，请从模型发布页自行下载并遵守其许可证。没有 Krea 2 也可以换任意 ComfyUI 文生图工作流，只要保留本项目使用的占位符，见 [docs/configuration.md](docs/configuration.md)。
+> 模型权重和角色 LoRA 不包含在本仓库中，请从模型发布页自行下载并遵守其许可证。没有 Krea 2 或 SDXL 也可以换任意 ComfyUI 文生图工作流，只要保留本项目使用的占位符，见 [docs/configuration.md](docs/configuration.md)。
 
 ---
 
@@ -80,7 +87,9 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -SillyTavernPath "D:\Sill
 安装脚本会做两件事：
 
 1. 把 `extension/` 复制到 `SillyTavern/public/scripts/extensions/third-party/k2-auto-image/`
-2. 把 `comfyui/Krea2_Turbo_T2I.json` 复制到 `SillyTavern/data/default-user/user/workflows/`
+2. 把 `comfyui/Krea2_Turbo_T2I.json` 和 `comfyui/characters/*.json` 复制到 `SillyTavern/data/default-user/user/workflows/`
+
+安装后工作流目录里应有 1 个默认工作流 + 8 个 `K2_IG_*.json` 角色工作流。
 
 也可以手动复制，目录结构见 [docs/how-it-works.md](docs/how-it-works.md)。
 
@@ -138,6 +147,7 @@ CHARACTER_MESSAGE_RENDERED 事件
   │
   ├─ 忽略用户消息 / 系统消息 / 图片消息
   ├─ extractMainBody()          只取 <game> 或清洗后的正文
+  ├─ resolveCharacterWorkflow() 按角色卡/正文选 K2_IG_*.json
   ├─ getCharacterSetting()      角色卡 + 世界书外形条目
   ├─ callLocalLlm() × 2         中文分镜 -> 英文提示词
   ├─ quality_prefix + negative  固定动漫风格
@@ -156,6 +166,7 @@ CHARACTER_MESSAGE_RENDERED 事件
 - 本地 LLM 走 SillyTavern 的服务端代理 `/api/backends/chat-completions/generate`，浏览器不直接跨域访问 Ollama。
 - ComfyUI 走 SillyTavern 的服务端代理 `/api/sd/comfy/generate`，浏览器不直接跨域访问 8188。
 - 图片通过 `/api/images/upload` 保存，消息结构沿用 SillyTavern 的 `extra.media` 格式。
+- 角色路由先看当前角色卡名/头像是否命中别名；未命中再扫正文，取最后出现的角色。这样“群聊卡里同时出现多人”时，会画正文最后聚焦的那个人。
 
 完整调用链、请求体和数据结构见 [docs/how-it-works.md](docs/how-it-works.md)。
 
@@ -171,7 +182,8 @@ CHARACTER_MESSAGE_RENDERED 事件
 | --- | --- | --- |
 | 启用 | 关 | 勾选后每条 AI 回复自动生成 |
 | ComfyUI 地址 | `http://127.0.0.1:8188` | 必须是 SillyTavern 服务端能访问的地址 |
-| 工作流文件名 | `Krea2_Turbo_T2I.json` | 位于 `data/default-user/user/workflows/` |
+| 默认工作流 | `Krea2_Turbo_T2I.json` | 未匹配到角色时使用；位于 `data/default-user/user/workflows/` |
+| 角色 → 工作流 JSON | 空 | 覆盖内置 8 角色映射；每项 `{label, aliases, workflow, width, height}` |
 | 宽 / 高 | 1024 / 1024 | 8GB 显存建议 768 或 1024 |
 | 步数 / CFG | 8 / 1 | Krea 2 Turbo 用低步数、CFG 1 |
 | 采样器 / 调度器 | `euler` / `simple` | 与工作流一致 |
@@ -202,6 +214,21 @@ CHARACTER_MESSAGE_RENDERED 事件
 | `%model%` / `%vae%` / `%clip_skip%` | 可选，设置面板留空则不覆盖 |
 | `%char_ref_image%` | 可选，角色参考图文件名（位于 `ComfyUI/input`） |
 
+### 内置角色工作流
+
+| 角色 | 工作流 | 底模 | LoRA |
+| --- | --- | --- | --- |
+| 希塔姆·坎 | `K2_IG_Hitamu.json` | `waiIllustriousSDXL_v170` | `hitamu-kyan-s1-illustriousxl-lora-nochekaiser` |
+| 梅伊德娜·安洁 | `K2_IG_Maidena.json` | 同上 | `maidena-ange-s1-illustriousxl-lora-nochekaiser` |
+| 花畑·诺金斯 | `K2_IG_Hanabata.json` | 同上 | `hanabata-nohkins-s1-illustriousxl-lora-nochekaiser` |
+| 艾诺梅 | `K2_IG_Enome.json` | 同上 | `enome-s1-illustriousxl-lora-nochekaiser` |
+| 诺玛·露恩 | `K2_IG_Noma.json` | 同上 | `noma-rune-s1-illustriousxl-lora-nochekaiser` |
+| 托琪希可·达娜 | `K2_IG_Tokishikko.json` | 同上 | `tokishikko_dana_V1_IL` |
+| 基库鲁·马丹 | `K2_IG_Kikuru.json` | 同上 | `kikuru_futoku_884402` |
+| 基萨拉 | `K2_IG_Kisara.json` | Krea 2 Turbo | `Kisara_krea2` |
+
+SDXL 角色工作流默认 832×1216、28 steps、CFG 6、`dpmpp_2m` / `karras`；基萨拉 1024×1024、8 steps、CFG 1、`euler` / `simple`。这些值写在工作流里，扩展不会用全局设置覆盖。
+
 换别的模型/工作流时，只要工作流是 API 格式并保留这些占位符，扩展不需要改代码。详见 [docs/configuration.md](docs/configuration.md)。
 
 ---
@@ -228,6 +255,20 @@ CHARACTER_MESSAGE_RENDERED 事件
 - 看 ComfyUI 控制台的节点报错；常见是模型没放对目录、`CLIPLoader type=krea2` 不支持（ComfyUI 太旧）
 - 先用 ComfyUI 网页手动跑一遍同一个工作流
 
+### 生成了错误的角色
+
+- 打开“调试日志”，看 Console 里的 `character workflow`：`role` 是否是你期望的人
+- 确认角色卡名称或正文里出现了该角色的中文名/英文别名
+- 同一个正文出现多人时，扩展选**最后被提到**的人；如果不对，可以在正文里把目标角色放到最后，或用“角色 → 工作流 JSON”手动覆盖
+- 角色卡名命中优先级高于正文；如果群聊卡名本身包含某个角色，可能会固定到那个角色
+
+### ComfyUI 报 `CUDA error: an illegal memory access`
+
+- 这是显卡/驱动在 LoRA 动态加载时的偶发错误，不是扩展的 JSON 问题
+- 先完全退出 ComfyUI 再启动，通常可以恢复
+- 8GB 显存连续切换多个 SDXL LoRA 后更容易出现；可改用 `启动ComfyUI-低显存.bat`，或把 SDXL 工作流的分辨率降到 768×1152
+- 如果每次都崩，换一个 LoRA 文件或降低 `strength_model` 再试
+
 ### 本地 LLM 报 400 / 404
 
 - 地址必须是 `http://127.0.0.1:11434/v1`（带 `/v1`）
@@ -248,11 +289,11 @@ CHARACTER_MESSAGE_RENDERED 事件
 
 ## 性能与限制
 
-- 一次生成 = 2 次本地 LLM 请求 + 1 次 ComfyUI 请求；7B Qwen + Krea 2 在 8GB 笔记本显卡上通常 **30–60 秒**，首次加载模型可能更久。
+- 一次生成 = 2 次本地 LLM 请求 + 1 次 ComfyUI 请求；7B Qwen + Krea 2 在 8GB 笔记本显卡上通常 **25–60 秒**，SDXL 28 steps 约 **30–50 秒**，首次加载模型可能更久。
 - 一条 AI 文本只生成一张图；重新 swipe 出不同正文会再生成。
 - 不支持一次回复生成多张、也不支持视频。
 - 提示词质量高度依赖本地 LLM；7B 以下模型容易写得太短或照抄对白。
-- 角色参考图/一致性需要你自己在工作流里加 `LoadImage` 和对应节点；本仓库默认是纯文生图。
+- 角色一致性由角色 LoRA 工作流提供；如果换成没有 LoRA 的工作流，需要自己在工作流里加 `LoadImage` 和参考图节点。
 - 生成内容是否合适由使用者负责；请遵守当地法律、模型许可证和你分享平台的规则。
 
 ---
@@ -267,7 +308,16 @@ sillytavern-k2-auto-image/
 │  ├─ settings.html           # 设置面板
 │  └─ style.css
 ├─ comfyui/
-│  └─ Krea2_Turbo_T2I.json    # API 格式工作流（带占位符）
+│  ├─ Krea2_Turbo_T2I.json    # 默认 Krea2 API 工作流（带占位符）
+│  └─ characters/             # 8 个角色 LoRA 工作流
+│     ├─ K2_IG_Hitamu.json
+│     ├─ K2_IG_Maidena.json
+│     ├─ K2_IG_Hanabata.json
+│     ├─ K2_IG_Enome.json
+│     ├─ K2_IG_Noma.json
+│     ├─ K2_IG_Tokishikko.json
+│     ├─ K2_IG_Kikuru.json
+│     └─ K2_IG_Kisara.json
 ├─ prompts/                   # 默认提示词，便于复制/修改
 │  ├─ stage1_zh.txt
 │  ├─ stage2_en.txt
@@ -314,7 +364,7 @@ git push -u origin main
 1. 仓库地址已按 `zdd3143/sillytavern-k2-auto-image` 填好；如果你 fork 或改名，同步替换 README 的 clone 地址和 `extension/manifest.json` 的 `homePage`
 2. 确认没有把 `data/`、生成图片、模型权重、API Key 提交进去
 3. 在仓库 About 里填一句简介和 topics：`sillytavern` `comfyui` `krea2` `ollama` `anime`
-4. 打一个 `v0.1.0` tag / Release
+4. 打一个 `v0.2.0` tag / Release
 
 详细步骤和可选的 Release 说明模板见 [docs/publishing.md](docs/publishing.md)。
 

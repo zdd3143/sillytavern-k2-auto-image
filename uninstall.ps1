@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 $stPath = $SillyTavernPath.TrimEnd('\')
 $extensionTarget = Join-Path $stPath "public\scripts\extensions\third-party\k2-auto-image"
-$workflowTarget = Join-Path $stPath ("data\{0}\user\workflows\Krea2_Turbo_T2I.json" -f $User)
+$workflowTargetDir = Join-Path $stPath ("data\{0}\user\workflows" -f $User)
 
 if (Test-Path $extensionTarget) {
     Remove-Item $extensionTarget -Recurse -Force
@@ -16,9 +16,17 @@ if (Test-Path $extensionTarget) {
     Write-Host "[SKIP] Extension not found: $extensionTarget"
 }
 
-if ($RemoveWorkflow -and (Test-Path $workflowTarget)) {
-    Remove-Item $workflowTarget -Force
-    Write-Host "[OK] Removed workflow: $workflowTarget"
+if ($RemoveWorkflow) {
+    $workflows = @(Join-Path $workflowTargetDir "Krea2_Turbo_T2I.json")
+    if (Test-Path $workflowTargetDir) {
+        $workflows += Get-ChildItem $workflowTargetDir -Filter "K2_IG_*.json" -File | ForEach-Object { $_.FullName }
+    }
+    foreach ($workflow in $workflows) {
+        if (Test-Path $workflow) {
+            Remove-Item $workflow -Force
+            Write-Host "[OK] Removed workflow: $workflow"
+        }
+    }
 }
 
 Write-Host "Settings are kept in SillyTavern settings.json (extension_settings.k2auto)."

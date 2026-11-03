@@ -196,6 +196,36 @@ character.scenario
 
 > 这段过滤是为了让公开仓库的默认行为保持克制，同时保留“画对人”所需的外形信息。你可以在自己的分支里改 `extractVisualProfile()`。
 
+### 4.4 角色 → 工作流路由
+
+`resolveCharacterWorkflow(body)` 决定这次用哪个工作流，逻辑在 `extension/index.js`：
+
+```js
+const CHARACTER_WORKFLOW_PRESETS = [
+  { id: 'hitamu', label: '希塔姆·坎', aliases: [...], workflow: 'K2_IG_Hitamu.json', width: 832, height: 1216 },
+  // ...
+];
+```
+
+1. 用 `resolveActiveCharacter()` 取当前角色卡：优先 `context.characterId`；群聊回退最后一条 AI 消息的 `original_avatar` / `name`。
+2. 把角色卡 `name`、`data.name`、`avatar` 和正文都做 `normalizeLookup()`：转小写并去掉空格、`·`、标点、括号。
+3. 每个 preset 的别名与卡名/正文比对：
+   - 卡名命中：`score += 100`
+   - 正文每出现一次：`score += 1`
+   - 同分时取正文里 `lastIndex` 更大的（最后被提到的人）。
+4. 没有命中任何角色时，回退 `settings.workflow_name`（默认 `Krea2_Turbo_T2I.json`）。
+
+`processMessage()` 把路由结果原样传给 `generateImage(prompt, route)`：
+
+```js
+const route = resolveCharacterWorkflow(body);
+const result = await generateImage(prompt, route);
+```
+
+`buildWorkflow()` 用 `route.workflow` 读文件，用 `route.width/height` 覆盖尺寸；工作流里的模型、LoRA、步数、CFG 不读全局设置，所以每个角色可以有自己的底模和采样参数。
+
+路由结果可以在设置面板“角色 → 工作流 JSON”里覆盖，格式是数组；解析失败会回退内置映射。
+
 ---
 
 ## 5. 两段式提示词
@@ -320,7 +350,9 @@ POST /api/sd/comfy/workflow
 { "file_name": "Krea2_Turbo_T2I.json" }
 ```
 
-这个接口从当前用户的 `data/<user>/user/workflows/` 读取文件，返回原始 JSON 文本。
+这个接口从当前用户的 `data/<user>/user/workflows/` 读取文件，返回原始 JSON 文本。`file_name` 来自角色路由结果（`K2_IG_*.json`）或默认设置。
+
+读取前会先请求 `/api/sd/comfy/workflows` 校验文件名存在，避免 SillyTavern 在文件缺失时静默回退到 `Default_Comfy_Workflow.json`。
 
 ### 7.2 替换占位符
 
@@ -407,6 +439,13 @@ API 格式长这样：
 ```
 
 节点 id 是字符串，连线是 `["上游节点id", 输出序号]`。
+
+角色工作流（`comfyui/characters/K2_IG_*.json`）也是同一格式，区别是：
+
+- SDXL 角色用 `CheckpointLoaderSimple` 加载 `waiIllustriousSDXL_v170.safetensors`，再用 `LoraLoader` 加载对应角色 LoRA；
+- `LoraLoader` 的 `model` 接底模输出 0，`clip` 接底模输出 1；
+- 采样参数写死为 28 steps / CFG 6 / `dpmpp_2m` / `karras`；
+- 只有 `%prompt%`、`%negative_prompt%`、`%seed%`、`%width%`、`%height%` 是占位符，模型/LoRA/步数/CFG 不开放覆盖。
 
 如果你只有 UI 格式工作流，可以用 ComfyUI 的“Save (API Format)”导出，或者用 `ComfyUI-to-API` 类工具转换。
 

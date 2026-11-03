@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.2.0
+
+角色自适应 LoRA 工作流。
+
+### 新增
+
+- 内置 8 个“不道德公会”角色 → 工作流映射
+- 7 个 SDXL/Illustrious 角色 LoRA 工作流，1 个 Krea 2 基萨拉工作流
+- 按角色卡名/头像优先、正文最后提及者兜底的路由逻辑
+- “角色 → 工作流 JSON”覆盖框，可自定义别名、工作流和尺寸
+- `install.ps1` 自动复制 `comfyui/characters/*.json`
+- 排错文档补充角色选错、CUDA illegal memory access、SDXL 耗时
+
+### 变更
+
+- `loadWorkflow()` / `buildWorkflow()` / `generateImage()` 接受工作流和尺寸参数
+- 设置面板的“工作流文件名”改为“默认工作流（未匹配到角色时使用）”
+- 版本号 0.2.0
+
+### 已知限制
+
+- SDXL 角色工作流需要 `waiIllustriousSDXL_v170` 和对应角色 LoRA；仓库不分发模型
+- 角色匹配依赖别名；角色卡名/正文都不出现时回退默认工作流
+- 只支持一条文本一张图，不支持视频
+
 ## 0.1.0
 
 首个公开版本。

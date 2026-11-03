@@ -31,8 +31,10 @@
 | 设置 | 默认值 | 说明 |
 | --- | --- | --- |
 | 地址 | `http://127.0.0.1:8188` | 必须是 **SillyTavern 服务端**能访问的地址；不要填 `localhost` 如果 ST 在 Docker 里 |
-| 工作流文件名 | `Krea2_Turbo_T2I.json` | 位于 `data/default-user/user/workflows/`，大小写敏感 |
-| 宽 | `1024` | 必须是 64 的倍数；8GB 显存建议 768 或 1024 |
+| 默认工作流 | `Krea2_Turbo_T2I.json` | 未匹配到角色时使用；位于 `data/default-user/user/workflows/`，大小写敏感 |
+| 角色 → 工作流 JSON | 空 | 覆盖内置 8 角色映射；空表示用内置映射 |
+| 宽 | `1024` | 仅默认/未匹配角色时使用；必须是 64 的倍数 |
+| 高 | `1024` | 同上 |
 | 高 | `1024` | 同上 |
 | 步数 | `8` | Krea 2 Turbo 用 6–10；普通模型用 20–30 |
 | CFG | `1` | Krea 2 Turbo 用 1；普通模型 4–7 |
@@ -53,6 +55,53 @@ SillyTavern/
 ```
 
 多用户部署时，每个用户有自己的 `data/<用户名>/user/workflows/`。扩展读取的是**当前登录用户**的目录。
+
+### 角色自动路由
+
+内置 8 个角色映射，工作流文件必须放在同一个 `workflows/` 目录：
+
+| 角色 | 工作流 | 底模 | 默认尺寸 |
+| --- | --- | --- | --- |
+| 希塔姆·坎 | `K2_IG_Hitamu.json` | SDXL Illustrious | 832×1216 |
+| 梅伊德娜·安洁 | `K2_IG_Maidena.json` | SDXL Illustrious | 832×1216 |
+| 花畑·诺金斯 | `K2_IG_Hanabata.json` | SDXL Illustrious | 832×1216 |
+| 艾诺梅 | `K2_IG_Enome.json` | SDXL Illustrious | 832×1216 |
+| 诺玛·露恩 | `K2_IG_Noma.json` | SDXL Illustrious | 832×1216 |
+| 托琪希可·达娜 | `K2_IG_Tokishikko.json` | SDXL Illustrious | 832×1216 |
+| 基库鲁·马丹 | `K2_IG_Kikuru.json` | SDXL Illustrious | 832×1216 |
+| 基萨拉 | `K2_IG_Kisara.json` | Krea 2 Turbo | 1024×1024 |
+
+选择规则：
+
+1. 当前角色卡名/`data.name`/头像命中别名 → 直接选该角色；
+2. 否则扫正文，取最后提到的角色（多人场景优先画最后出场的人）；
+3. 都没命中 → 用“默认工作流”和全局宽高。
+
+“角色 → 工作流 JSON”可以覆盖内置映射，格式：
+
+```json
+[
+  {
+    "id": "my-char",
+    "label": "我的角色",
+    "aliases": ["我的角色", "my char"],
+    "workflow": "K2_IG_MyChar.json",
+    "width": 832,
+    "height": 1216
+  }
+]
+```
+
+字段说明：
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `label` | 否 | 状态栏/toast 显示的名字 |
+| `aliases` | 是 | 角色卡名或正文里可能出现的名字；会做小写、去空格/标点归一化 |
+| `workflow` | 是 | `workflows/` 下的文件名 |
+| `width` / `height` | 否 | 不填则用全局宽高 |
+
+填写非法 JSON 时不会中断生图，扩展会回退内置映射并在 Console 打日志。
 
 ### 可选占位符覆盖
 
@@ -284,6 +333,29 @@ realistic skin texture, monochrome, muted colors
 
 不需要改一行 JS。
 
+如果要做“角色 LoRA 工作流”，推荐直接把模型/LoRA/采样参数写死在工作流里，而不是用全局 `%model%`：
+
+```json
+"10": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": { "ckpt_name": "waiIllustriousSDXL_v170.safetensors" }
+},
+"11": {
+  "class_type": "LoraLoader",
+  "inputs": {
+    "model": ["10", 0],
+    "clip": ["10", 1],
+    "lora_name": "hitamu-kyan-s1-illustriousxl-lora-nochekaiser.safetensors",
+    "strength_model": 0.75,
+    "strength_clip": 0.75
+  }
+}
+```
+
+注意 `LoraLoader` 的 `clip` 必须接底模输出 **1**，不是 0；接错会报 `received_type(MODEL) mismatch input_type(CLIP)`。
+
+这类工作流只保留 `%prompt%`、`%negative_prompt%`、`%seed%`、`%width%`、`%height%` 占位符；扩展的全局步数/CFG/采样器不会覆盖它。仓库里的 `comfyui/characters/*.json` 就是这种写法。
+
 ### 7.4 加角色参考图
 
 在工作流里加：
@@ -329,6 +401,8 @@ LLM: 7B Qwen
 超时: 300000
 延迟: 1800
 ```
+
+> 上面的步数/CFG/采样器只对默认工作流生效。角色工作流（`K2_IG_*.json`）内部写死 SDXL 28 steps / CFG 6 或 Krea2 8 steps / CFG 1；8GB 显卡实测 832×1216 SDXL 可以跑，连续切换多个 LoRA 后如果 ComfyUI 崩，重启它或改用低显存启动脚本。
 
 ### 12GB+ 显卡
 

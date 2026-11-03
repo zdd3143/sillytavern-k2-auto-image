@@ -20,8 +20,17 @@
             <label for="k2auto_comfy_url">地址</label>
             <input id="k2auto_comfy_url" class="text_pole" type="text" placeholder="http://127.0.0.1:8188">
 
-            <label for="k2auto_workflow_name">工作流文件名（放在 user/workflows）</label>
+            <label for="k2auto_workflow_name">默认工作流（未匹配到角色时使用）</label>
             <input id="k2auto_workflow_name" class="text_pole" type="text" placeholder="Krea2_Turbo_T2I.json">
+
+            <div class="k2auto-hint">
+                角色自动路由：优先匹配当前角色卡名称，再扫描当前正文中的角色名。
+                命中“不道德公会”角色时自动切换到对应的 LoRA 工作流；没有命中才使用上面的默认工作流。
+            </div>
+            <details>
+                <summary>角色 → 工作流映射（JSON，留空用内置）</summary>
+                <textarea id="k2auto_character_workflows" class="text_pole" rows="8" placeholder='[{"label":"角色名","aliases":["角色名","别名"],"workflow":"K2_IG_Character.json","width":832,"height":1216}]'></textarea>
+            </details>
 
             <div class="k2auto-grid">
                 <div>

@@ -15,8 +15,8 @@ if (-not (Test-Path (Join-Path $stPath "config.yaml"))) {
 $extensionSource = Join-Path $repo "extension"
 $extensionTarget = Join-Path $stPath "public\scripts\extensions\third-party\k2-auto-image"
 $workflowSource = Join-Path $repo "comfyui\Krea2_Turbo_T2I.json"
+$characterWorkflowSource = Join-Path $repo "comfyui\characters"
 $workflowTargetDir = Join-Path $stPath ("data\{0}\user\workflows" -f $User)
-$workflowTarget = Join-Path $workflowTargetDir "Krea2_Turbo_T2I.json"
 
 if (-not (Test-Path (Join-Path $extensionSource "manifest.json"))) {
     throw "Extension source is incomplete: $extensionSource"
@@ -41,12 +41,23 @@ if ($extensionExisted) {
 Copy-Item (Join-Path $extensionSource "*") $extensionTarget -Recurse -Force
 Write-Host "[OK] Extension installed to: $extensionTarget"
 
-if ((Test-Path $workflowTarget) -and -not $ForceWorkflow) {
-    Write-Host "[SKIP] Workflow already exists: $workflowTarget"
-    Write-Host "       Use -ForceWorkflow to overwrite it."
-} else {
-    Copy-Item $workflowSource $workflowTarget -Force
-    Write-Host "[OK] Workflow installed to: $workflowTarget"
+$workflowSources = @($workflowSource)
+if (Test-Path $characterWorkflowSource) {
+    $workflowSources += Get-ChildItem $characterWorkflowSource -Filter "*.json" -File | ForEach-Object { $_.FullName }
+}
+
+foreach ($source in $workflowSources) {
+    $name = Split-Path -Leaf $source
+    $target = Join-Path $workflowTargetDir $name
+    if ((Test-Path $target) -and -not $ForceWorkflow) {
+        Write-Host "[SKIP] Workflow already exists: $target"
+        continue
+    }
+    Copy-Item $source $target -Force
+    Write-Host "[OK] Workflow installed to: $target"
+}
+if (-not $ForceWorkflow) {
+    Write-Host "     Existing workflows were kept. Use -ForceWorkflow to overwrite them."
 }
 
 Write-Host ""

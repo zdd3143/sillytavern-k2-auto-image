@@ -71,10 +71,82 @@ const DEFAULT_NEGATIVE = [
     'realistic skin texture, monochrome, muted colors',
 ].join(', ');
 
+// Built-in character -> workflow map. Each workflow already contains the
+// matching character LoRA and the sampler settings for its base model, so the
+// extension only has to pick the right file. Users can override this map with
+// the "角色 → 工作流" JSON textarea in the settings panel.
+const CHARACTER_WORKFLOW_PRESETS = [
+    {
+        id: 'hitamu',
+        label: '希塔姆·坎',
+        aliases: ['希塔姆·坎', '希塔姆', 'hitamu', 'kian', 'キタム'],
+        workflow: 'K2_IG_Hitamu.json',
+        width: 832,
+        height: 1216,
+    },
+    {
+        id: 'maidena',
+        label: '梅伊德娜·安洁',
+        aliases: ['梅伊德娜·安洁', '梅伊德娜', '安洁', 'maidena', 'ange', 'メイデナ'],
+        workflow: 'K2_IG_Maidena.json',
+        width: 832,
+        height: 1216,
+    },
+    {
+        id: 'hanabata',
+        label: '花畑·诺金斯',
+        aliases: ['花畑·诺金斯', '花畑', '诺金斯', 'hanabata', 'nohkins'],
+        workflow: 'K2_IG_Hanabata.json',
+        width: 832,
+        height: 1216,
+    },
+    {
+        id: 'enome',
+        label: '艾诺梅',
+        aliases: ['艾诺梅', 'enome', 'エノメ'],
+        workflow: 'K2_IG_Enome.json',
+        width: 832,
+        height: 1216,
+    },
+    {
+        id: 'noma',
+        label: '诺玛·露恩',
+        aliases: ['诺玛·露恩', '诺玛', '露恩', 'noma', 'rune'],
+        workflow: 'K2_IG_Noma.json',
+        width: 832,
+        height: 1216,
+    },
+    {
+        id: 'tokishikko',
+        label: '托琪希可·达娜',
+        aliases: ['托琪希可·达娜', '托琪希可', '达娜', 'tokishikko', 'dana'],
+        workflow: 'K2_IG_Tokishikko.json',
+        width: 832,
+        height: 1216,
+    },
+    {
+        id: 'kikuru',
+        label: '基库鲁·马丹',
+        aliases: ['基库鲁·马丹', '基库鲁', '马丹', 'kikuru', 'madan'],
+        workflow: 'K2_IG_Kikuru.json',
+        width: 832,
+        height: 1216,
+    },
+    {
+        id: 'kisara',
+        label: '基萨拉',
+        aliases: ['基萨拉', 'kisara', 'キサラ'],
+        workflow: 'K2_IG_Kisara.json',
+        width: 1024,
+        height: 1024,
+    },
+];
+
 const DEFAULT_SETTINGS = Object.freeze({
     enabled: false,
     comfy_url: 'http://127.0.0.1:8188',
     workflow_name: 'Krea2_Turbo_T2I.json',
+    character_workflows: '',
     width: 1024,
     height: 1024,
     steps: 8,
@@ -291,6 +363,108 @@ function resolveActiveCharacter() {
     return null;
 }
 
+function normalizeLookup(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[\s\u3000·・.,，。_\-—–:：;；/\\()（）\[\]【】{}]/g, '');
+}
+
+function getCharacterPresets() {
+    const raw = String(settings?.character_workflows || '').trim();
+    if (raw) {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(item => item && item.workflow && Array.isArray(item.aliases));
+            }
+        } catch (error) {
+            log('character_workflows JSON 无效，使用内置映射', error);
+        }
+    }
+    return CHARACTER_WORKFLOW_PRESETS;
+}
+
+/**
+ * Pick a character workflow from the active card, then from the current scene
+ * text. A card-name match beats a body mention; between body mentions, the
+ * character mentioned last wins (the usual case in a multi-character scene).
+ */
+function resolveCharacterWorkflow(body = '') {
+    const character = resolveActiveCharacter();
+    // 只使用当前角色卡身份；name2 是用户人设名，不能用来决定生图角色。
+    const cardNames = [
+        character?.name,
+        character?.data?.name,
+        character?.avatar,
+    ]
+        .map(normalizeLookup)
+        .filter(name => name.length >= 2);
+    const bodyText = normalizeLookup(body);
+
+    let best = null;
+    for (const preset of getCharacterPresets()) {
+        const aliases = (preset.aliases || [])
+            .map(normalizeLookup)
+            .filter(alias => alias.length >= 2);
+        if (!aliases.length || !preset.workflow) {
+            continue;
+        }
+
+        const cardHit = aliases.some(alias => cardNames.some(name => name.includes(alias)));
+        let mentions = 0;
+        let lastIndex = -1;
+        for (const alias of aliases) {
+            let from = 0;
+            while (from < bodyText.length) {
+                const index = bodyText.indexOf(alias, from);
+                if (index === -1) {
+                    break;
+                }
+                mentions += 1;
+                lastIndex = Math.max(lastIndex, index);
+                from = index + alias.length;
+            }
+        }
+
+        if (!cardHit && mentions === 0) {
+            continue;
+        }
+
+        const score = (cardHit ? 100 : 0) + mentions;
+        if (!best
+            || score > best.score
+            || (score === best.score && lastIndex > best.lastIndex)) {
+            best = {
+                id: preset.id || preset.workflow,
+                label: preset.label || preset.id || preset.workflow,
+                workflow: preset.workflow,
+                width: preset.width ?? settings.width,
+                height: preset.height ?? settings.height,
+                score,
+                cardHit,
+                mentions,
+                lastIndex,
+            };
+        }
+    }
+
+    if (best) {
+        return { ...best, matched: true };
+    }
+    return {
+        id: 'default',
+        label: '默认',
+        workflow: settings.workflow_name,
+        width: settings.width,
+        height: settings.height,
+        score: 0,
+        cardHit: false,
+        mentions: 0,
+        lastIndex: -1,
+        matched: false,
+    };
+}
+
 function getCardSetting(character) {
     if (!settings.include_card_fields) {
         return '';
@@ -478,7 +652,7 @@ async function buildPrompt(body) {
 /* ComfyUI                                                             */
 /* ------------------------------------------------------------------ */
 
-async function loadWorkflow() {
+async function loadWorkflow(workflowName = settings.workflow_name) {
     // The workflow endpoint falls back to Default_Comfy_Workflow.json when the
     // requested file is missing, so verify the name against the workflow list
     // first instead of silently rendering with the wrong graph.
@@ -490,16 +664,16 @@ async function loadWorkflow() {
         throw new Error(`读取工作流列表失败: ${await listResponse.text()}`);
     }
     const files = await listResponse.json();
-    if (!Array.isArray(files) || !files.includes(settings.workflow_name)) {
+    if (!Array.isArray(files) || !files.includes(workflowName)) {
         throw new Error(
-            `找不到工作流 ${settings.workflow_name}。请确认它位于 SillyTavern 的 data/<user>/user/workflows 目录。`,
+            `找不到工作流 ${workflowName}。请确认它位于 SillyTavern 的 data/<user>/user/workflows 目录。`,
         );
     }
 
     const response = await fetch('/api/sd/comfy/workflow', {
         method: 'POST',
         headers: getRequestHeaders(),
-        body: JSON.stringify({ file_name: settings.workflow_name }),
+        body: JSON.stringify({ file_name: workflowName }),
     });
     const raw = await response.text();
     if (!response.ok) {
@@ -521,7 +695,7 @@ async function loadWorkflow() {
     try {
         JSON.parse(text);
     } catch {
-        throw new Error(`工作流不是合法 JSON: ${settings.workflow_name}`);
+        throw new Error(`工作流不是合法 JSON: ${workflowName}`);
     }
     return text;
 }
@@ -534,8 +708,9 @@ function replacePlaceholders(template, values) {
     return result;
 }
 
-async function buildWorkflow(prompt) {
-    const template = await loadWorkflow();
+async function buildWorkflow(prompt, options = {}) {
+    const workflowName = options.workflow_name || settings.workflow_name;
+    const template = await loadWorkflow(workflowName);
     const seed = Number(settings.seed) >= 0
         ? Number(settings.seed)
         : Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
@@ -544,8 +719,8 @@ async function buildWorkflow(prompt) {
         prompt,
         negative_prompt: settings.negative_prompt,
         seed,
-        width: Number(settings.width),
-        height: Number(settings.height),
+        width: Number(options.width ?? settings.width),
+        height: Number(options.height ?? settings.height),
         steps: Number(settings.steps),
         scale: Number(settings.scale),
         sampler: settings.sampler,
@@ -586,9 +761,10 @@ async function buildWorkflow(prompt) {
     return { prompt: graph };
 }
 
-async function generateImage(prompt) {
-    setStatus('正在调用 ComfyUI 生图…');
-    const workflow = await buildWorkflow(prompt);
+async function generateImage(prompt, options = {}) {
+    const label = options.label || options.workflow_name || settings.workflow_name;
+    setStatus(`正在调用 ComfyUI 生图（${label}）…`);
+    const workflow = await buildWorkflow(prompt, options);
 
     const response = await fetch('/api/sd/comfy/generate', {
         method: 'POST',
@@ -700,14 +876,16 @@ async function processMessage(message, manual = false) {
     }
     lastSignature = signature;
 
+    const route = resolveCharacterWorkflow(body);
+    log('character workflow', route);
     const prompt = await buildPrompt(body);
     log('final prompt', prompt);
 
-    const result = await generateImage(prompt);
+    const result = await generateImage(prompt, route);
     await appendImage(result, prompt, message.name);
 
-    setStatus('配图完成。');
-    toast('配图完成。', 'success');
+    setStatus(`配图完成（${route.label}）。`);
+    toast(`配图完成（${route.label}）。`, 'success');
 }
 
 async function runForMessage(message, manual = false) {
@@ -838,6 +1016,7 @@ function loadUi() {
         k2auto_enabled: settings.enabled,
         k2auto_comfy_url: settings.comfy_url,
         k2auto_workflow_name: settings.workflow_name,
+        k2auto_character_workflows: settings.character_workflows,
         k2auto_width: settings.width,
         k2auto_height: settings.height,
         k2auto_steps: settings.steps,
@@ -901,6 +1080,7 @@ async function init() {
     bindCheck('k2auto_enabled', 'enabled');
     bindText('k2auto_comfy_url', 'comfy_url');
     bindText('k2auto_workflow_name', 'workflow_name');
+    bindText('k2auto_character_workflows', 'character_workflows');
     bindNumber('k2auto_width', 'width');
     bindNumber('k2auto_height', 'height');
     bindNumber('k2auto_steps', 'steps');
@@ -947,4 +1127,4 @@ jQuery(async () => {
 
 // Exported for integration tests and for other extensions that want to reuse
 // the prompt/workflow pipeline without duplicating the ComfyUI plumbing.
-export { appendImage, buildWorkflow, generateImage };
+export { appendImage, buildWorkflow, generateImage, init, resolveCharacterWorkflow };
