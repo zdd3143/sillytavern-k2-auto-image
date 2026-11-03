@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.1
+
+针对 Krea2（Qwen 文本编码器）继续改善“图与描述不符”。Krea2 不截断提示词，问题是提示词堆了多个动作、且没有镜头/构图指令。
+
+### 变更
+
+- `stage2_system` 重写：先写镜头类型/机位（close-up / medium close-up / medium shot / full shot）再写定格；只保留一个主动作，禁止 `then` / `while` 串联
+- 不写 `User`，改 `the young man` 或按衣服描述；人物发色、耳朵、帽子、服装只能照抄中文原文，不许改颜色；男性保持男性
+- `cleanText()` 去掉标点前的多余空格（`breath ,` → `breath,`）
+- 导出 `buildPrompt`，便于调试与集成测试
+- 文档：提示词调参表新增“画面只有站姿 / 关键动作没画”和“人物性别/发色被改”两行
+- 版本号 0.7.1
+
+### 说明
+
+- 77-token 截断只影响 SDXL/Illustrious 工作流；Krea2 的 `Krea2Tokenizer` 不设长度上限
+- K2 没有角色 LoRA，人物身份完全靠提示词里的外观描述，所以发色和服装必须写准
+
 ## 0.7.0
 
 修复“生成的图和描述对不上”：根因是 SDXL 每个 `CLIPTextEncode` 只读 77 个 token，长提示词的后半段被 ComfyUI 静默截断。

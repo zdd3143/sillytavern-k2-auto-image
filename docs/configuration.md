@@ -235,7 +235,7 @@ realistic skin texture, monochrome, muted colors
 
 - 保留“单个瞬间”的动作/位置/视线/远近/痕迹，不改成肖像、不罗列连续动作
 - **不再重复风格标签**：质量前缀由调用方统一加在前面
-- **不写人物名 tag**：用 `the blue-haired man` 之类外观短描述，角色外观由 LoRA 控制
+- **不写人物名 tag**：用 `the blue-haired man` 之类外观短描述，角色外观由 LoRA 控制；K2 没有角色 LoRA 时，描述里的发色/服装必须照抄中文，不能自己编
 - 不新增剧情、不解释
 
 不要让它“自由发挥”，否则会新增剧情。
@@ -245,6 +245,8 @@ realistic skin texture, monochrome, muted colors
 | 输出中文 | 强化 “English only. No Chinese characters.”；temperature 降到 0.1 |
 | 丢细节 | 把 “Keep every visual detail” 改成逐项列表：character/appearance/clothing/pose/expression/setting/lighting |
 | 加了引号/解释 | 在 `cleanText()` 里已经去掉首尾引号；仍出现就加 “No quotes, no labels, no commentary.” |
+| 画面只有站姿 / 关键动作没画 | 让第二段先写镜头类型（close-up / medium close-up）和一个主动作；多个动作时只留最重要的一个，别用 then/while 串起来 |
+| 人物性别/发色被改 | 在 `stage2_system` 里明确“按中文里写的发色和服装描述，不许改颜色，男性保持 the young man” |
 
 ### 关于露骨内容
 

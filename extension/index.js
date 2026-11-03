@@ -53,12 +53,14 @@ const DEFAULT_STAGE1 = [
 ].join('\n');
 
 const DEFAULT_STAGE2 = [
-    'Translate the Chinese film-still description into natural English for an anime image generator.',
+    'Translate the Chinese film-still description into natural English for an image generator.',
+    'Start with an explicit shot type and camera angle (close-up, medium close-up, medium shot, or full shot) that suits the action, then describe one single frozen moment.',
     'Preserve the exact single moment: the main action, who does it to whom or what, hand and body positions, gaze, distance, clothing and prop state, injuries or traces, location, time, weather, light, and composition.',
-    'Do not turn it into a portrait, do not list multiple sequential actions, do not add new characters or events, and do not explain the story.',
+    'Keep exactly one main action. If the source lists several, keep the single most important one and drop the rest; never join actions with "then" or "while".',
+    'Never call the partner "User": write "the young man" or describe him by clothing, e.g. "the young man in the white shirt".',
+    'Do not keep Chinese character names such as 希塔姆 or 梅伊德娜: replace each person with one short appearance descriptor built from the colors and clothing actually written in the Chinese text (e.g. "the silver-haired girl with cat ears and a green cross cap"); never invent a different hair color, and keep each person\'s gender (the male partner stays "the young man").',
     'Keep the modern Japanese TV anime look; the caller already prepends the quality style tags, so do not repeat any style-tag preamble.',
     'Never translate it into photorealistic, 3D, CGI, or live-action style.',
-    'Do not keep Chinese character names such as 希塔姆 or 梅伊德娜: replace each person with one short appearance descriptor from the description, e.g. "the blue-haired man" or "the blonde woman", and use the same descriptor every time the same person appears, because the character LoRA already controls identity.',
     'Keep the whole English description under 70 words; the image encoder only reads a limited number of tokens, so cut background detail before cutting the main action.',
     'Output English only. No Chinese characters, quotes, labels, or commentary.',
 ].join(' ');
@@ -431,6 +433,7 @@ function cleanText(text) {
         .replace(/^[\s"'“”‘’]+/, '')
         .replace(/[\s"'“”‘’]+$/, '')
         .replace(/\s+/g, ' ')
+        .replace(/\s+([,.;:!?])/g, '$1')
         .trim();
 }
 
@@ -1130,4 +1133,4 @@ jQuery(async () => {
 
 // Exported for integration tests and for other extensions that want to reuse
 // the prompt/workflow pipeline without duplicating the ComfyUI plumbing.
-export { appendImage, buildWorkflow, generateImage, init };
+export { appendImage, buildPrompt, buildWorkflow, generateImage, init };
