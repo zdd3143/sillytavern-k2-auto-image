@@ -1,4 +1,4 @@
-{
+﻿{
     "display_name": "K2 Auto Image",
     "loading_order": 100,
     "requires": [],
@@ -6,7 +6,7 @@
     "js": "index.js",
     "css": "style.css",
     "author": "K2 Auto Image contributors",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "homePage": "https://github.com/zdd3143/sillytavern-k2-auto-image",
     "auto_update": false
 }

@@ -129,6 +129,20 @@ const WORKFLOW_LABELS = {
     'Illustrious_Kikuru_T2I.json': 'Illustrious 基库鲁 · 文生图',
 };
 
+// 每个自带工作流推荐的生成参数。选中工作流时自动套用，避免手改宽高/步数。
+const ILLUSTRIOUS_PRESET = { width: 832, height: 1216, steps: 28, scale: 6, sampler: 'dpmpp_2m', scheduler: 'karras' };
+const WORKFLOW_PRESETS = {
+    'Krea2_Default_T2I.json': { width: 1024, height: 1024, steps: 8, scale: 1, sampler: 'euler', scheduler: 'simple' },
+    'Krea2_Kisara_T2I.json': { width: 1024, height: 1024, steps: 8, scale: 1, sampler: 'euler', scheduler: 'simple' },
+    'Illustrious_Hitamu_T2I.json': ILLUSTRIOUS_PRESET,
+    'Illustrious_Maidena_T2I.json': ILLUSTRIOUS_PRESET,
+    'Illustrious_Hanabata_T2I.json': ILLUSTRIOUS_PRESET,
+    'Illustrious_Enome_T2I.json': ILLUSTRIOUS_PRESET,
+    'Illustrious_Noma_T2I.json': ILLUSTRIOUS_PRESET,
+    'Illustrious_Tokishikko_T2I.json': ILLUSTRIOUS_PRESET,
+    'Illustrious_Kikuru_T2I.json': ILLUSTRIOUS_PRESET,
+};
+
 function getSettings() {
     if (!extension_settings[MODULE_NAME] || typeof extension_settings[MODULE_NAME] !== 'object') {
         extension_settings[MODULE_NAME] = {};
@@ -854,6 +868,31 @@ function bindCheck(id, key) {
     });
 }
 
+/**
+ * Apply the recommended size / steps / CFG / sampler for a bundled workflow.
+ * Workflows that hard-code these values are unaffected on the ComfyUI side,
+ * but the panel stays consistent and placeholder-based workflows get the
+ * right numbers too.
+ */
+function applyWorkflowPreset(workflowName) {
+    const preset = WORKFLOW_PRESETS[workflowName];
+    if (!preset) {
+        return;
+    }
+    let changed = false;
+    for (const [key, value] of Object.entries(preset)) {
+        if (settings[key] !== value) {
+            settings[key] = value;
+            changed = true;
+        }
+    }
+    if (changed) {
+        saveSettingsDebounced();
+        loadUi();
+        log('applied workflow preset', workflowName, preset);
+    }
+}
+
 function bindSelect(id, key) {
     const el = document.getElementById(id);
     if (!el) {
@@ -862,6 +901,9 @@ function bindSelect(id, key) {
     el.addEventListener('change', () => {
         settings[key] = el.value;
         saveSettingsDebounced();
+        if (key === 'workflow_name') {
+            applyWorkflowPreset(el.value);
+        }
     });
 }
 

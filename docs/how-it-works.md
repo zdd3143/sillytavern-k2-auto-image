@@ -214,7 +214,7 @@ const result = await generateImage(prompt);
 | `Krea2_Kisara_T2I.json` | Krea 2 + `Kisara_krea2` LoRA |
 | `Illustrious_<角色>_T2I.json` | `waiIllustriousSDXL_v170` + 对应 Illustrious 角色 LoRA |
 
-想画某个角色，就把对应文件名填进设置里的“工作流”；扩展不会自己切换。
+想画某个角色，就在设置里的“工作流”下拉中选对应项；扩展不会自己切换。选中后 `applyWorkflowPreset()` 会把该工作流的推荐宽高/步数/CFG/采样器写进设置并刷新面板（角色工作流内部仍以自己的硬编码参数为准，推荐值只用于保持面板一致）。
 
 ---
 
