@@ -59,6 +59,7 @@ const DEFAULT_STAGE2 = [
     'Keep the modern Japanese TV anime look; the caller already prepends the quality style tags, so do not repeat any style-tag preamble.',
     'Never translate it into photorealistic, 3D, CGI, or live-action style.',
     'Do not keep Chinese character names such as 希塔姆 or 梅伊德娜: replace each person with one short appearance descriptor from the description, e.g. "the blue-haired man" or "the blonde woman", and use the same descriptor every time the same person appears, because the character LoRA already controls identity.',
+    'Keep the whole English description under 70 words; the image encoder only reads a limited number of tokens, so cut background detail before cutting the main action.',
     'Output English only. No Chinese characters, quotes, labels, or commentary.',
 ].join(' ');
 
@@ -433,6 +434,56 @@ function cleanText(text) {
         .trim();
 }
 
+// 中文标点和汉字在英文提示词里没有意义，还会白白占用 CLIP 的 token 预算。
+const CJK_PATTERN = /[\u3000-\u303f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/g;
+
+function stripCjk(text) {
+    return String(text || '')
+        .replace(CJK_PATTERN, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+// SDXL 的 CLIP 每个编码器只接受 77 个 token，超出部分会被 ComfyUI 静默截断。
+// 含 %prompt_2% 的工作流把提示词切成两段分别编码再拼接，最多约 154 个 token。
+const PROMPT_WORD_LIMIT = 110;
+
+function splitPromptForTwoEncoders(prompt) {
+    const words = String(prompt || '').trim().split(/\s+/).filter(Boolean).slice(0, PROMPT_WORD_LIMIT);
+    if (!words.length) {
+        return ['', ''];
+    }
+    if (words.length < 12) {
+        const single = words.join(' ');
+        return [single, single];
+    }
+
+    const target = Math.ceil(words.length / 2);
+    const sentences = String(prompt || '').trim().match(/[^.!?]+[.!?]*/g) || [];
+    const head = [];
+    for (const sentence of sentences) {
+        const parts = sentence.trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) {
+            continue;
+        }
+        if (head.length && head.length + parts.length > target + 6) {
+            break;
+        }
+        head.push(...parts);
+        if (head.length >= target) {
+            break;
+        }
+    }
+
+    const headWords = head.slice(0, PROMPT_WORD_LIMIT);
+    if (!headWords.length) {
+        headWords.push(...words.slice(0, target));
+    }
+    const tail = words.slice(headWords.length);
+    const headText = headWords.join(' ');
+    return [headText, tail.length ? tail.join(' ') : headText];
+}
+
 function extractContent(data) {
     const content = data?.choices?.[0]?.message?.content
         ?? data?.choices?.[0]?.text
@@ -498,12 +549,12 @@ async function buildPrompt(body) {
     ));
 
     setStatus('正在翻译成英文提示词…');
-    const english = cleanText(await callLocalLlm(
+    const english = stripCjk(cleanText(await callLocalLlm(
         settings.stage2_system,
         chinese,
         Number(settings.stage2_temperature),
         Number(settings.stage2_max_tokens),
-    ));
+    )));
 
     return `${settings.quality_prefix} ${english}`.trim();
 }
@@ -601,6 +652,14 @@ async function buildWorkflow(prompt, options = {}) {
     }
 
     let result = replacePlaceholders(template, values);
+
+    // 含 %prompt_2% 的工作流有两个编码器：把提示词切成两段，避免 77 token 截断。
+    if (template.includes('"%prompt_2%"')) {
+        const [first, second] = splitPromptForTwoEncoders(prompt);
+        values.prompt = first;
+        values.prompt_2 = second;
+        result = replacePlaceholders(template, values);
+    }
 
     if (/%char_ref_image%/i.test(result)) {
         if (!settings.ref_image) {

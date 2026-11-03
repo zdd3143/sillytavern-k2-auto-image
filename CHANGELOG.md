@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0
+
+修复“生成的图和描述对不上”：根因是 SDXL 每个 `CLIPTextEncode` 只读 77 个 token，长提示词的后半段被 ComfyUI 静默截断。
+
+### 变更
+
+- 7 个 `Illustrious_*_T2I.json` 增加第二个正向编码器 `%prompt_2%`（节点 20）和 `ConditioningConcat`（节点 22）；`KSampler.positive` 改接拼接后的条件，可用约 154 个 token
+- `buildWorkflow()` 检测到 `%prompt_2%` 时，用 `splitPromptForTwoEncoders()` 按句子边界把提示词切成两段（总词数上限 110）
+- `buildPrompt()` 对第二段英文执行 `stripCjk()`，清除模型偶发带出的中文，避免占用 token
+- `stage2_system` 增加“英文、70 词以内”的明确要求；说明“先删背景细节，再删主动作”
+- 文档：占位符表补充 `%prompt_2%`，新增“长提示词：两个编码器”小节和截断排错项
+- 角色工作流保存图片的前缀恢复为 `SillyTavern/K2Auto_*` 子目录
+- 版本号 0.7.0
+
 ## 0.6.0
 
 角色工作流的采样参数改为占位符，步数 / CFG / 采样器 / 调度器 / denoise 可以在酒馆面板里直接修改。

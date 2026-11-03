@@ -425,6 +425,15 @@ SillyTavern/data/default-user/user/images/
 3. 确认工作流在 `data/<user>/user/workflows/` 且文件名大小写一致；
 4. 想同时用两个角色时，可以在自己的工作流里串联两个 `LoraLoader`，或分别生成两张图。
 
+### 图里只有描述的前半段 / 后面的动作没画出来
+
+SDXL 的 `CLIPTextEncode` 只读 77 个 token，超出的描述会被静默丢弃。排查：
+
+1. 打开“调试日志”，看最终 prompt 的单词数；超过约 90 词就很容易被截断。
+2. 确认用的是角色工作流（`Illustrious_*_T2I.json`），它们带第二个编码器 `%prompt_2%` + `ConditioningConcat`；自定义工作流要自己加这两个节点，否则只能吃 77 token。
+3. 第二段英文提示词里不应有中文；扩展会用 `stripCjk()` 清掉，但仍建议在 `stage2_system` 里要求“English only, under 70 words”。
+4. 质量前缀也会占 token；太长时删掉不重要的标签。
+
 ---
 
 ## 11. 提示词照抄对白 / 写剧情

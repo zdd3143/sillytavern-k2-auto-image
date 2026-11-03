@@ -292,6 +292,7 @@ realistic skin texture, monochrome, muted colors
 | 占位符 | 类型 | 替换值 |
 | --- | --- | --- |
 | `%prompt%` | 字符串 | 质量前缀 + 英文提示词 |
+| `%prompt_2%` | 字符串 | 提示词第二段（仅当工作流含第二个 `CLIPTextEncode` 时） |
 | `%negative_prompt%` | 字符串 | 负面提示词 |
 | `%seed%` | 数字 | 种子 |
 | `%width%` / `%height%` | 数字 | 分辨率 |
@@ -304,6 +305,8 @@ realistic skin texture, monochrome, muted colors
 | `%vae%` | 字符串 | 仅当设置里填了 VAE |
 | `%clip_skip%` | 数字 | 仅当设置里填了 ≥0 |
 | `%char_ref_image%` | 字符串 | 仅当设置里填了参考图 |
+
+关于 `%prompt_2%`：SDXL 的每个 `CLIPTextEncode` 只读 77 个 token，超出的部分会被 ComfyUI 静默丢弃。角色工作流因此放两个 `CLIPTextEncode`（`%prompt%` 和 `%prompt_2%`），再用 `ConditioningConcat` 把两段条件拼起来，最多可用约 154 个 token。扩展会把提示词切成两段分别填进去；没有 `%prompt_2%` 的工作流保持原样，只填 `%prompt%`。
 
 **必须带引号**：
 

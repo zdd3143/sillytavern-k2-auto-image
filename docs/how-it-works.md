@@ -204,7 +204,7 @@ character.scenario
 const result = await generateImage(prompt);
 ```
 
-`buildWorkflow()` 用 `settings.workflow_name` 读文件，用 `settings.width/height` 替换尺寸占位符。工作流里的模型、LoRA、步数、CFG、采样器不读全局设置，所以每个角色工作流可以有自己的底模和采样参数。
+`buildWorkflow()` 用 `settings.workflow_name` 读文件，用 `settings.width/height` 替换尺寸占位符。工作流里的底模和 LoRA 是写死的，尺寸/步数/CFG/采样器/调度器则是占位符，由扩展填入当前设置值——所以每个角色工作流可以有专属底模，同时参数仍能在面板里调。
 
 仓库自带的 8 个角色工作流只是**现成可选项**，命名规则是“底模 + 角色 + 方式”：
 
@@ -215,6 +215,19 @@ const result = await generateImage(prompt);
 | `Illustrious_<角色>_T2I.json` | `waiIllustriousSDXL_v170` + 对应 Illustrious 角色 LoRA |
 
 想画某个角色，就在设置里的“工作流”下拉中选对应项；扩展不会自己切换。选中后 `applyWorkflowPreset()` 会把该工作流的推荐宽高/步数/CFG/采样器写进设置并刷新面板；工作流里的采样参数是占位符，所以之后在面板里改这些值会真正传给 ComfyUI。
+
+### 4.5 长提示词：两个编码器
+
+SDXL 的每个 `CLIPTextEncode` 只读 **77 个 token**，超出的部分 ComfyUI 不会报错，而是直接截断——表现就是“图里只有描述的前半段”。角色工作流因此有两个正向编码器：
+
+```text
+CLIPTextEncode("3", text="%prompt%")   ─┐
+CLIPTextEncode("20", text="%prompt_2%") ─┤→ ConditioningConcat("22") → KSampler.positive
+```
+
+`buildWorkflow()` 发现模板里有 `"%prompt_2%"` 时，用 `splitPromptForTwoEncoders()` 把提示词切成两段（按句子边界、总词数上限 110），两段各占一个 77-token 窗口，合计约 154 个 token。`ConditioningConcat` 沿序列维拼接（`ConditioningCombine` 只是并列条件，不能延长上下文）。
+
+另外 `buildPrompt()` 会用 `stripCjk()` 去掉第二段英文里的残留中文——英文 CLIP 不认识汉字，只会白占 token。
 
 ---
 

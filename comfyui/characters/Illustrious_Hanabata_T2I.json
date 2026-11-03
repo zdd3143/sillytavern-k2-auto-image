@@ -57,7 +57,7 @@
         0
       ],
       "positive": [
-        "3",
+        "22",
         0
       ],
       "negative": [
@@ -96,7 +96,30 @@
         "7",
         0
       ],
-      "filename_prefix": "K2Auto_Illustrious_Hanabata"
+      "filename_prefix": "SillyTavern/K2Auto_Illustrious_Hanabata_T2I"
+    }
+  },
+  "20": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "2",
+        1
+      ],
+      "text": "%prompt_2%"
+    }
+  },
+  "22": {
+    "class_type": "ConditioningConcat",
+    "inputs": {
+      "conditioning_to": [
+        "3",
+        0
+      ],
+      "conditioning_from": [
+        "20",
+        0
+      ]
     }
   }
 }
