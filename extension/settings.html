@@ -113,8 +113,8 @@
             <details>
                 <summary>高级：两段式提示词模板</summary>
                 <p class="k2auto-hint">
-                    第一段让本地模型用中文写分镜；第二段只做英文翻译。修改时保留两段的分工，
-                    否则模型容易直接照抄对白或剧情。
+                    第一段让本地模型用中文写分镜；第二段负责转换。Krea2 用自然语言（英文翻译），
+                    Illustrious / SDXL 用标签式（danbooru tags）。扩展会按所选工作流自动选对应模板。
                 </p>
                 <label for="k2auto_stage1_system">第一段：中文分镜 system</label>
                 <textarea id="k2auto_stage1_system" class="text_pole textarea_compact" rows="12"></textarea>
@@ -129,8 +129,14 @@
                     </div>
                 </div>
 
-                <label for="k2auto_stage2_system">第二段：英文翻译 system</label>
+                <label for="k2auto_stage2_system">第二段 A：Krea2 自然语言 system（英文翻译）</label>
                 <textarea id="k2auto_stage2_system" class="text_pole textarea_compact" rows="6"></textarea>
+
+                <label for="k2auto_stage2_system_sdxl">第二段 B：Illustrious / SDXL 标签 system</label>
+                <textarea id="k2auto_stage2_system_sdxl" class="text_pole textarea_compact" rows="6"></textarea>
+                <p class="k2auto-hint">
+                    工作流文件名含 illustrious / sdxl / pony / noob 时用 B，其余用 A。
+                </p>
                 <div class="k2auto-grid">
                     <div>
                         <label for="k2auto_stage2_temp">第二段 temperature</label>

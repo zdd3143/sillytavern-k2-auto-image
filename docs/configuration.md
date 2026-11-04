@@ -248,6 +248,24 @@ realistic skin texture, monochrome, muted colors
 | 画面只有站姿 / 关键动作没画 | 让第二段先写镜头类型（close-up / medium close-up）和一个主动作；多个动作时只留最重要的一个，别用 then/while 串起来 |
 | 人物性别/发色被改 | 在 `stage2_system` 里明确“按中文里写的发色和服装描述，不许改颜色，男性保持 the young man” |
 
+### SDXL 标签式提示词（Illustrious）
+
+Illustrious / SDXL 系模型对长句不敏感，用 danbooru 标签更稳定。扩展按工作流文件名自动切换：
+
+- 文件名含 `illustrious`、`sdxl`、`pony`、`noob` → 用 `stage2_system_sdxl`，输出一行逗号分隔标签，例如：
+
+  ```text
+  1girl, long hair, silver hair, blue eyes, cat ears, green hat, white shirt,
+  black bowtie, green dress, male focus, holding shirt, leaning forward,
+  close-up, rain, stone stairs, blurry background, tears, night, cel shading
+  ```
+
+- 其他（Krea2）→ 用 `stage2_system`，输出自然语言英文。
+
+标签模板的要点：主体数量放最前；每个标签 1–4 个词；只保留一个主动作；发色、服装、性别照抄中文原文；不重复 `masterpiece` 这类质量标签（`quality_prefix` 已经加过）。两个模板都在设置面板“高级：两段式提示词模板”里，可以分别改。
+
+如果标签模式效果不好，可以只改 `stage2_system_sdxl`，不影响 K2 的自然语言模板。
+
 ### 关于露骨内容
 
 仓库默认模板是**非露骨版**（模板里没有任何引导性内容的指令），原因是它要作为公开仓库分发，需要遵守 GitHub 和模型平台的内容规则。

@@ -19,7 +19,8 @@
 
 - **只读当前正文**：优先提取最后一条 AI 消息里的 `<game>...</game>`；没有 `<game>` 时自动剥离 `<think>`、`<options>`、`<summary>`、`<comment>`、变量/状态 JSON、HTML 标签和数值行。
 - **人物设定**：读取当前角色卡的 `Description / Personality / Scenario`，以及角色卡世界书里与正文人物匹配的外形条目（基础信息、身高骨架、体脂、皮肤、面部、发型、日常外穿、鞋袜、配饰、体态、气味）。
-- **两段式本地提示词**：第一段让 Qwen 按“剧情”写画面——先判断本段的高潮/转折，只画一个主动作，用静态痕迹（湿衣、血迹、被踢开的门、晃动的灯）暗示前因，不照抄对白、不罗列连续动作；第二段只做英文翻译，不再重复风格标签，也不把人物名写进提示词（外观由角色 LoRA 决定）。
+- **两段式本地提示词**：第一段让 Qwen 按“剧情”写画面——先判断本段的高潮/转折，只画一个主动作，用静态痕迹（湿衣、血迹、被踢开的门、晃动的灯）暗示前因，不照抄对白、不罗列连续动作；第二段按目标工作流自动换模板：Krea2 输出自然语言英文，Illustrious / SDXL 输出 danbooru 标签。两种模板都能在面板里单独编辑。
+- **SDXL 标签式提示词**：工作流名含 `illustrious / sdxl / pony / noob` 时，第二段改为标签模式——`1girl, silver hair, cat ears, green dress, close-up, rain, ...`，只保留一个主动作、发色和性别照抄中文原文，避免 SDXL 读不懂长句。
 - **固定动漫风格**：质量前缀锁定 `modern Japanese TV anime`，负面词排除 `photorealistic / 3d render / live action / CGI`。
 - **角色 LoRA 工作流（手动切换）**：随仓库提供 8 个按“底模 + 角色 + 文生图/图生图”命名的工作流（7 个 `waiIllustriousSDXL_v170` + Illustrious 角色 LoRA，基萨拉为 Krea 2 Turbo + `Kisara_krea2` LoRA）。模型和 LoRA 写在各自工作流里；尺寸、步数、CFG、采样器、调度器都是占位符，选中工作流会自动套用推荐值，之后可在面板里自由修改。想用哪个角色，就在“工作流”下拉里选它，不会自动按角色切换。
 - **长提示词不丢后半段**：SDXL 每个文本编码器只读 77 个 token。Illustrious 角色工作流内置第二个编码器（`%prompt_2%`）+ `ConditioningConcat`，扩展把提示词切成两段分别编码，可用约 154 个 token；同时会清掉英文里的残留中文。

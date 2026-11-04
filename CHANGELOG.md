@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.8.0
+
+Illustrious / SDXL 工作流改用标签式提示词，Krea2 继续用自然语言。
+
+### 变更
+
+- 新增 `DEFAULT_STAGE2_SDXL` 与设置项 `stage2_system_sdxl`：输出 danbooru 风格标签（主体数量、外观、镜头、单个动作、场景、光线），20–50 个短标签
+- `buildPrompt(body, workflowName)` 按工作流文件名判断模板：含 `illustrious / sdxl / pony / noob` 用标签模板，其余用自然语言模板
+- 新增 `isSdxlWorkflow()`、`normalizeTagPrompt()`（去换行、去引号、合并逗号、去首尾逗号）
+- `processMessage()` 把当前 `settings.workflow_name` 传给 `buildPrompt()`
+- 设置面板“高级：两段式提示词模板”拆成两个输入框：Krea2 自然语言、SDXL 标签
+- 文档：`docs/how-it-works.md` 第 5 节改写“按工作流选模板”；`docs/configuration.md` 新增“SDXL 标签式提示词（Illustrious）”；`README.md` 功能列表同步
+- 版本号 0.8.0
+
+### 说明
+
+- 标签模板与自然语言模板互不影响，Krea2 的剧情向提示词保持不变
+- 标签模式下 `quality_prefix` 仍然前置，所以不要让模型重复输出质量标签
+- Illustrious 工作流仍是两个编码器，标签提示词会按词边界切成两段
+
 ## 0.7.1
 
 针对 Krea2（Qwen 文本编码器）继续改善“图与描述不符”。Krea2 不截断提示词，问题是提示词堆了多个动作、且没有镜头/构图指令。

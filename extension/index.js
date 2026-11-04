@@ -65,6 +65,19 @@ const DEFAULT_STAGE2 = [
     'Output English only. No Chinese characters, quotes, labels, or commentary.',
 ].join(' ');
 
+const DEFAULT_STAGE2_SDXL = [
+    'You turn a Chinese film-still description into a booru-style tag prompt for an SDXL anime model.',
+    'Output ONLY comma-separated English tags: no sentences, no explanations, no quotes, no line breaks, no Chinese.',
+    'Order: subject count first (1girl, 1boy, 2girls, 1girl and 1boy), then character tags, then framing and action, then setting, then lighting and style.',
+    'Character tags: hair color and length, eye color, animal ears or hat, and the clothing items actually worn, using Danbooru vocabulary such as silver hair, long hair, blue eyes, cat ears, green hat, white shirt, black bowtie, green dress.',
+    'Framing tags: close-up, upper body, cowboy shot, full body, from side, looking at viewer, profile.',
+    'Action tags: exactly ONE main action, for example hugging, holding hands, leaning forward, head on chest, hand on own chest, blush, parted lips, tears. Do not chain several actions and never use "then".',
+    'Setting tags: outdoors, night, rain, stone stairs, lantern, depth of field, blurry background, dark background.',
+    'Lighting and style tags: cinematic lighting, backlighting, detailed background, anime screencap, cel shading.',
+    'Keep hair color, clothing and gender exactly as written in the Chinese description; never invent a different hair color or turn a man into a woman; refer to the male partner as 1boy or "male focus", never "User".',
+    'Keep 20-50 short tags, each 1-4 words. Do not output quality tags such as masterpiece or best quality: the caller already prepends them.',
+].join(' ');
+
 const DEFAULT_QUALITY_PREFIX = [
     'masterpiece, best quality, modern Japanese TV anime, anime screencap',
     'crisp digital lineart, soft cel shading, clean color blocks',
@@ -111,6 +124,7 @@ const DEFAULT_SETTINGS = Object.freeze({
     negative_prompt: DEFAULT_NEGATIVE,
     stage1_system: DEFAULT_STAGE1,
     stage2_system: DEFAULT_STAGE2,
+    stage2_system_sdxl: DEFAULT_STAGE2_SDXL,
     debug: false,
 });
 
@@ -539,7 +553,24 @@ async function callLocalLlm(system, user, temperature, maxTokens) {
     }
 }
 
-async function buildPrompt(body) {
+// Illustrious / SDXL 系工作流不认识自然语言长句，用 danbooru 标签式提示词更稳；
+// Krea2 的 Qwen 文本编码器则更适合自然语言。
+function isSdxlWorkflow(workflowName) {
+    return /illustrious|sdxl|pony|noob/i.test(String(workflowName || ''));
+}
+
+function normalizeTagPrompt(text) {
+    return String(text || '')
+        .replace(/^(tags?|prompt)\s*[:：]\s*/i, '')
+        .replace(/[\r\n]+/g, ', ')
+        .replace(/[“”"'‘’]/g, '')
+        .replace(/\s*,\s*/g, ', ')
+        .replace(/(,\s*){2,}/g, ', ')
+        .replace(/\s+([,.;:!?])/g, '$1')
+        .replace(/^[,\s]+|[,\s]+$/g, '');
+}
+
+async function buildPrompt(body, workflowName = settings.workflow_name) {
     const setting = getCharacterSetting(body);
     const stageOneUser = `<人物设定>\n${setting || '（未提供，以正文中的人物为准）'}\n</人物设定>\n\n<正文>\n${body}\n</正文>`;
 
@@ -551,13 +582,20 @@ async function buildPrompt(body) {
         Number(settings.stage1_max_tokens),
     ));
 
-    setStatus('正在翻译成英文提示词…');
-    const english = stripCjk(cleanText(await callLocalLlm(
-        settings.stage2_system,
+    const sdxl = isSdxlWorkflow(workflowName);
+    setStatus(sdxl ? '正在把分镜转成 SDXL 标签…' : '正在翻译成英文提示词…');
+    const secondSystem = sdxl
+        ? (settings.stage2_system_sdxl || DEFAULT_STAGE2_SDXL)
+        : settings.stage2_system;
+    let english = stripCjk(cleanText(await callLocalLlm(
+        secondSystem,
         chinese,
         Number(settings.stage2_temperature),
         Number(settings.stage2_max_tokens),
     )));
+    if (sdxl) {
+        english = normalizeTagPrompt(english);
+    }
 
     return `${settings.quality_prefix} ${english}`.trim();
 }
@@ -798,7 +836,7 @@ async function processMessage(message, manual = false) {
     }
     lastSignature = signature;
 
-    const prompt = await buildPrompt(body);
+    const prompt = await buildPrompt(body, settings.workflow_name);
     log('final prompt', prompt);
 
     const result = await generateImage(prompt);
@@ -1048,6 +1086,7 @@ function loadUi() {
         k2auto_negative: settings.negative_prompt,
         k2auto_stage1_system: settings.stage1_system,
         k2auto_stage2_system: settings.stage2_system,
+        k2auto_stage2_system_sdxl: settings.stage2_system_sdxl,
     };
 
     for (const [id, value] of Object.entries(values)) {
@@ -1112,6 +1151,7 @@ async function init() {
     bindText('k2auto_negative', 'negative_prompt');
     bindText('k2auto_stage1_system', 'stage1_system');
     bindText('k2auto_stage2_system', 'stage2_system');
+    bindText('k2auto_stage2_system_sdxl', 'stage2_system_sdxl');
     bindCheck('k2auto_use_book', 'use_character_book');
     bindCheck('k2auto_card_fields', 'include_card_fields');
     bindCheck('k2auto_debug', 'debug');

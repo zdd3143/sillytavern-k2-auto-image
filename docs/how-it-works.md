@@ -261,17 +261,39 @@ User 消息结构：
 </正文>
 ```
 
-### 第二段：英文翻译
+### 第二段：按工作流选模板
 
-System prompt 在 `DEFAULT_STAGE2`：
+`buildPrompt(body, workflowName)` 会先判断目标工作流属于哪一类：
+
+```js
+function isSdxlWorkflow(workflowName) {
+    return /illustrious|sdxl|pony|noob/i.test(String(workflowName || ''));
+}
+```
+
+- **Krea2**（文件名不含上面几个词）：用 `settings.stage2_system`（`DEFAULT_STAGE2`），输出自然语言英文句子。Krea2 的文本编码器基于 Qwen3VL，不做 77-token 截断，适合长句。
+- **Illustrious / SDXL**：用 `settings.stage2_system_sdxl`（`DEFAULT_STAGE2_SDXL`），输出 **danbooru 标签**，再由 `normalizeTagPrompt()` 规范成逗号分隔、无换行、无引号的一行。
+
+SDXL 标签模板的要求：
+
+- 先写主体数量（`1girl` / `1boy` / `1girl, 1boy`），再写人物标签、镜头与动作、场景、光线与画风
+- 人物标签用 danbooru 词汇：发色、发长、瞳色、猫耳/帽子、实际穿的衣服
+- **只保留一个主动作**，禁止 `then` 串联多个动作
+- 男性写 `1boy` / `male focus`，不写 `User`
+- 20–50 个短标签，不重复质量标签（调用方已加 quality prefix）
+
+两种模板可以在设置面板的“高级：两段式提示词模板”里分别编辑。
+
+### 第二段：Krea2 自然语言模板（`DEFAULT_STAGE2`）
 
 - 只翻译，不新增剧情
+- 先写镜头类型/机位（close-up / medium close-up / medium shot / full shot），再写单个瞬间
 - 保留人物、服装、姿势、表情、环境、光线、构图、风格
-- **保留“单个瞬间”**：不改成肖像，不罗列连续动作
+- **保留“单个瞬间”**：不改成肖像，不罗列连续动作，禁止 then/while
 - **不重复风格标签**：质量前缀由 `buildPrompt` 统一加在前面，这里不再输出 style-tag 前缀
-- **不写人物名 tag**：改用 `the blue-haired man` 之类的外观短描述，因为有角色 LoRA 负责身份
+- **不写人物名 tag**：改用外观短描述；K2 没有角色 LoRA 时，发色和服装必须照抄中文原文，男性保持 `the young man`
 - 禁止转成 photorealistic / 3D / CGI / live-action
-- 只输出英文
+- 只输出英文，70 词以内
 
 最终提示词：
 
